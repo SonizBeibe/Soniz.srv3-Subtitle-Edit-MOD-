@@ -228,6 +228,7 @@ public partial class MainViewModel :
     [ObservableProperty] private bool _showColumnOriginalText;
     [ObservableProperty] private bool _showColumnStartTime;
     [ObservableProperty] private bool _showColumnEndTime;
+    [ObservableProperty] private bool _autoGenerateYtt;
     [ObservableProperty] private bool _showColumnGap;
     [ObservableProperty] private bool _showColumnDuration;
     [ObservableProperty] private bool _showColumnActor;
@@ -16493,6 +16494,29 @@ public partial class MainViewModel :
 
         new BookmarkPersistence(GetUpdateSubtitle(), _subtitleFileName).Save();
 
+        if (AutoGenerateYtt && !isAutoSave)
+        {
+            try
+            {
+                var ytsubconverterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ytsubconverter.exe");
+                if (File.Exists(ytsubconverterPath))
+                {
+                    var processInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = ytsubconverterPath,
+                        Arguments = $"\"{_subtitleFileName}\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    System.Diagnostics.Process.Start(processInfo);
+                }
+            }
+            catch
+            {
+                // Ignore errors
+            }
+        }
+
         return true;
     }
 
@@ -16547,6 +16571,29 @@ public partial class MainViewModel :
         _lastOpenSaveFormat = SelectedSubtitleFormat;
 
         new BookmarkPersistence(GetUpdateSubtitle(), _subtitleFileName).Save();
+
+        if (AutoGenerateYtt && !isAutoSave)
+        {
+            try
+            {
+                var ytsubconverterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ytsubconverter.exe");
+                if (File.Exists(ytsubconverterPath))
+                {
+                    var processInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = ytsubconverterPath,
+                        Arguments = $"\"{_subtitleFileName}\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    System.Diagnostics.Process.Start(processInfo);
+                }
+            }
+            catch
+            {
+                // Ignore errors
+            }
+        }
 
         return true;
     }

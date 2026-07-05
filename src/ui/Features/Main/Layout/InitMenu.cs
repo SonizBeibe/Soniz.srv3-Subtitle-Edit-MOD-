@@ -925,8 +925,6 @@ public static class InitMenu
             Command = vm.ShowPickLayerFilterCommand,
         });
 
-        menu.Items.Add(menuItemAssaTools);
-
         var menuItemSsaTools = new MenuItem
         {
             Header = l.SsaTools,

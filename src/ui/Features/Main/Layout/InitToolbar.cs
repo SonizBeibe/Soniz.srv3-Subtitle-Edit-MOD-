@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -63,6 +64,38 @@ public static class InitToolbar
         };
 
         var appearance = Se.Settings.Appearance;
+
+        // subtitle formats
+        stackPanelLeft.Children.Add(new TextBlock
+        {
+            Text = Se.Language.General.Format,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(5, 0, 3, 0),
+        });
+        var comboBoxSubtitleFormat = new ComboBox
+        {
+            Width = 200,
+            [AutomationProperties.NameProperty] = Se.Language.General.Format,
+            [!ComboBox.ItemsSourceProperty] = new Binding(nameof(vm.SubtitleFormats)),
+            [!ComboBox.SelectedItemProperty] = new Binding(nameof(vm.SelectedSubtitleFormat)),
+            DataContext = vm,
+            ItemTemplate = new FuncDataTemplate<object>((item, _) =>
+                new TextBlock
+                {
+                    [!TextBlock.TextProperty] = new Binding(nameof(SubtitleFormat.Name)),
+                    Width = 150,
+                }, true)
+        };
+        comboBoxSubtitleFormat.SelectionChanged += vm.ComboBoxSubtitleFormatChanged;
+        comboBoxSubtitleFormat.KeyDown += vm.ComboBoxSubtitleFormatKeyDown;
+        // Tunnel phase so we see the event before ComboBox consumes a left-click to open
+        // its dropdown (matters for Mac Ctrl+Click, which Avalonia delivers as left+Ctrl).
+        comboBoxSubtitleFormat.AddHandler(InputElement.PointerPressedEvent,
+            vm.ComboBoxSubtitleFormatPointerPressed,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+        stackPanelLeft.Children.Add(comboBoxSubtitleFormat);
+
         var isLastSeparator = true;
         var languageHints = Se.Language.Main.Toolbar;
         var shortcuts = ShortcutsMain.GetUsedShortcuts(vm);
@@ -424,38 +457,6 @@ public static class InitToolbar
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        // subtitle formats
-        stackPanelRight.Children.Add(new TextBlock
-        {
-            Text = Se.Language.General.Format,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(5, 0, 3, 0),
-        });
-        var comboBoxSubtitleFormat = new ComboBox
-        {
-            Width = 200,
-            [AutomationProperties.NameProperty] = Se.Language.General.Format,
-            [!ComboBox.ItemsSourceProperty] = new Binding(nameof(vm.SubtitleFormats)),
-            [!ComboBox.SelectedItemProperty] = new Binding(nameof(vm.SelectedSubtitleFormat)),
-            DataContext = vm,
-            ItemTemplate = new FuncDataTemplate<object>((item, _) =>
-                new TextBlock
-                {
-                    [!TextBlock.TextProperty] = new Binding(nameof(SubtitleFormat.Name)),
-                    Width = 150,
-                }, true)
-        };
-        comboBoxSubtitleFormat.SelectionChanged += vm.ComboBoxSubtitleFormatChanged;
-        comboBoxSubtitleFormat.KeyDown += vm.ComboBoxSubtitleFormatKeyDown;
-        // Tunnel phase so we see the event before ComboBox consumes a left-click to open
-        // its dropdown (matters for Mac Ctrl+Click, which Avalonia delivers as left+Ctrl).
-        comboBoxSubtitleFormat.AddHandler(InputElement.PointerPressedEvent,
-            vm.ComboBoxSubtitleFormatPointerPressed,
-            RoutingStrategies.Tunnel,
-            handledEventsToo: true);
-        stackPanelRight.Children.Add(comboBoxSubtitleFormat);
-        isLastSeparator = false;
-
         if (appearance.ToolbarShowEncoding)
         {
             stackPanelRight.Children.Add(new TextBlock
@@ -494,6 +495,16 @@ public static class InitToolbar
             stackPanelRight.Children.Add(comboBoxFrameRate);
             comboBoxFrameRate.SelectionChanged += vm.ComboBoxFrameRateSelectionChanged;
         }
+
+        var checkBoxAutoYtt = new CheckBox
+        {
+            Content = "Auto-generar YTT/SRV3 (requiere ytsubconverter.exe)",
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(15, 0, 5, 0),
+            DataContext = vm,
+            [!ToggleButton.IsCheckedProperty] = new Binding(nameof(vm.AutoGenerateYtt)),
+        };
+        stackPanelRight.Children.Add(checkBoxAutoYtt);
 
         var grid = new Grid
         {
