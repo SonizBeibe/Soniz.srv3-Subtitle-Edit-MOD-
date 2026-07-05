@@ -37,6 +37,7 @@ public class TextWithSubtitleSyntaxHighlightingConverter : IValueConverter
     private static readonly SolidColorBrush CharsBrush = new(CharsColor);
     private static readonly SolidColorBrush ValuesBrush = new(ValuesColor);
     private static readonly SolidColorBrush StyleBrush = new(StyleColor);
+    private static readonly SolidColorBrush KaraokeBrush = new(Color.FromRgb(255, 105, 180)); // Hot Pink
 
     // Named HTML colors mapping
     private static readonly Dictionary<string, Color> NamedColors = new(StringComparer.OrdinalIgnoreCase)
@@ -664,6 +665,21 @@ public class TextWithSubtitleSyntaxHighlightingConverter : IValueConverter
                                     {
                                         Foreground = ValuesBrush
                                     });
+                                }
+                            }
+                            else if (tagName.Equals("k", StringComparison.OrdinalIgnoreCase) ||
+                                     tagName.Equals("kf", StringComparison.OrdinalIgnoreCase) ||
+                                     tagName.Equals("ko", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Convert centiseconds to milliseconds visually
+                                if (int.TryParse(tagValue, out int cs))
+                                {
+                                    int ms = cs * 10;
+                                    inlines.Add(new Run($"{ms}ms") { Foreground = KaraokeBrush });
+                                }
+                                else
+                                {
+                                    inlines.Add(new Run(tagValue) { Foreground = KaraokeBrush });
                                 }
                             }
                             else

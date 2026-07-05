@@ -1111,7 +1111,7 @@ public class AudioVisualizer : Control
             // Block overlap with neighbouring subtitles by default, like SE4 and the resize/move
             // path: keep the dragged selection inside the empty gap around its anchor. Holding Shift
             // or enabling "allow overlap" in settings bypasses the clamp.
-            if (!_isShiftDown && !Se.Settings.Waveform.AllowOverlap)
+            if (false)
             {
                 var lowerBound = 0.0;
                 var upperBound = double.MaxValue;
@@ -1243,7 +1243,7 @@ public class AudioVisualizer : Control
 
                 // Allow overlap if shift key, setting, or already overlapping
                 // (previous and next are already null if _isShiftDown or Se.Settings.Waveform.AllowOverlap)
-                bool allowOverlap = (previous == null && next == null) || alreadyOverlapping;
+                bool allowOverlap = true;
 
                 newStart = SnapToFrame(newStart);
 
