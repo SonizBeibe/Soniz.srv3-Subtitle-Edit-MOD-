@@ -12,7 +12,7 @@ public class FileHelperTests
     [InlineData("subtitle.srt", ".srt", "subtitle.srt")]
     [InlineData("subtitle.SRT", ".srt", "subtitle.SRT")] // case-insensitive
     // Filename ends with a DIFFERENT known subtitle extension -> preserve user intent.
-    [InlineData("subtitle.ass", ".srt", "subtitle.ass")]
+    [InlineData("subtitle.ssa", ".srt", "subtitle.ssa")]
     // Filename ends with a language tag that LOOKS like an extension (issue #10349).
     // Path.HasExtension returned true for these and the format extension was dropped.
     [InlineData("Half Man S01E01.sv", ".srt", "Half Man S01E01.sv.srt")]

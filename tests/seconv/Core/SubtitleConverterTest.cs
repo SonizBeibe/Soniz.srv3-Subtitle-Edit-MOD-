@@ -43,7 +43,7 @@ public class SubtitleConverterTest : IDisposable
         var options = new ConversionOptions
         {
             Patterns = [inputFile],
-            Format = "WebVTT",
+            Format = "YouTubeSbv",
             OutputFolder = outputFolder,
             Overwrite = true,
         };
@@ -55,7 +55,7 @@ public class SubtitleConverterTest : IDisposable
         // Assert
         Assert.True(result.Success, string.Join("; ", result.Errors));
         Assert.Equal(1, result.SuccessfulFiles);
-        Assert.Single(Directory.GetFiles(outputFolder, "*.vtt"));
+        Assert.Single(Directory.GetFiles(outputFolder, "*.sbv"));
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class SubtitleConverterTest : IDisposable
             // Each path is passed as a separate element (mirrors how the CLI receives them
             // when the user writes: seconv "path1" "path2, with comma" --format ASS)
             Patterns = [file1, file2],
-            Format = "Advanced Sub Station Alpha",
+            Format = "SubStationAlpha",
             OutputFolder = outputFolder,
             Overwrite = true,
         };
@@ -95,7 +95,7 @@ public class SubtitleConverterTest : IDisposable
         Assert.True(result.Success, string.Join("; ", result.Errors));
         Assert.Equal(2, result.SuccessfulFiles);
 
-        var outputFiles = Directory.GetFiles(outputFolder, "*.ass");
+        var outputFiles = Directory.GetFiles(outputFolder, "*.ssa");
         Assert.Equal(2, outputFiles.Length);
     }
 
@@ -116,7 +116,7 @@ public class SubtitleConverterTest : IDisposable
         var options = new ConversionOptions
         {
             Patterns = [inputFile],
-            Format = "Advanced Sub Station Alpha",
+            Format = "SubStationAlpha",
             OutputFolder = outputFolder,
             Overwrite = true,
         };
@@ -126,6 +126,6 @@ public class SubtitleConverterTest : IDisposable
 
         Assert.True(result.Success, string.Join("; ", result.Errors));
         Assert.Equal(1, result.SuccessfulFiles);
-        Assert.Single(Directory.GetFiles(outputFolder, "*.ass"));
+        Assert.Single(Directory.GetFiles(outputFolder, "*.ssa"));
     }
 }

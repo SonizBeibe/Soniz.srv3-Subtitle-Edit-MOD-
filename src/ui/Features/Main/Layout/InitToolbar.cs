@@ -425,7 +425,7 @@ public static class InitToolbar
         };
 
         // subtitle formats
-        stackPanelRight.Children.Add(new TextBlock
+        stackPanelLeft.Children.Add(new TextBlock
         {
             Text = Se.Language.General.Format,
             VerticalAlignment = VerticalAlignment.Center,
@@ -453,12 +453,12 @@ public static class InitToolbar
             vm.ComboBoxSubtitleFormatPointerPressed,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
-        stackPanelRight.Children.Add(comboBoxSubtitleFormat);
+        stackPanelLeft.Children.Add(comboBoxSubtitleFormat);
         isLastSeparator = false;
 
         if (appearance.ToolbarShowEncoding)
         {
-            stackPanelRight.Children.Add(new TextBlock
+            stackPanelLeft.Children.Add(new TextBlock
             {
                 Text = Se.Language.General.Encoding,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -472,12 +472,12 @@ public static class InitToolbar
                 [!ComboBox.SelectedItemProperty] = new Binding(nameof(vm.SelectedEncoding)),
                 DataContext = vm,
             };
-            stackPanelRight.Children.Add(comboBoxEncoding);
+            stackPanelLeft.Children.Add(comboBoxEncoding);
         }
 
         if (appearance.ToolbarShowFrameRate)
         {
-            stackPanelRight.Children.Add(new TextBlock
+            stackPanelLeft.Children.Add(new TextBlock
             {
                 Text = Se.Language.General.FrameRate,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -491,9 +491,20 @@ public static class InitToolbar
                 [!ComboBox.SelectedItemProperty] = new Binding(nameof(vm.SelectedFrameRate)),
                 DataContext = vm,
             };
-            stackPanelRight.Children.Add(comboBoxFrameRate);
+            stackPanelLeft.Children.Add(comboBoxFrameRate);
             comboBoxFrameRate.SelectionChanged += vm.ComboBoxFrameRateSelectionChanged;
         }
+
+
+        var cbAutoGenerateYtt = new CheckBox
+        {
+            Content = "Auto-generar YTT/SRV3 (requiere ytsubconverter.exe)",
+            Margin = new Thickness(10, 0, 5, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            DataContext = vm,
+            [!CheckBox.IsCheckedProperty] = new Binding(nameof(vm.AutoGenerateYtt))
+        };
+        stackPanelRight.Children.Add(cbAutoGenerateYtt);
 
         var grid = new Grid
         {

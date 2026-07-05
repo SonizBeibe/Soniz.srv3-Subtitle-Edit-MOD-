@@ -23,7 +23,7 @@ public class OutputFileNameTest : IDisposable
         new()
         {
             Patterns = ["dummy.srt"],
-            Format = "WebVTT",
+            Format = "YouTubeSbv",
             OutputFolder = _tempRoot,
             Overwrite = overwrite,
             OutputFilename = outputFilename,
@@ -37,7 +37,7 @@ public class OutputFileNameTest : IDisposable
 
         var result = SubtitleConverter.ResolveOutputFileName(input, Opts());
 
-        Assert.Equal(Path.Combine(_tempRoot, "input.vtt"), result);
+        Assert.Equal(Path.Combine(_tempRoot, "input.sbv"), result);
     }
 
     [Fact]
@@ -45,11 +45,11 @@ public class OutputFileNameTest : IDisposable
     {
         var input = Path.Combine(_tempRoot, "input.srt");
         File.WriteAllText(input, "");
-        File.WriteAllText(Path.Combine(_tempRoot, "input.vtt"), "preexisting");
+        File.WriteAllText(Path.Combine(_tempRoot, "input.sbv"), "preexisting");
 
         var result = SubtitleConverter.ResolveOutputFileName(input, Opts(overwrite: true));
 
-        Assert.Equal(Path.Combine(_tempRoot, "input.vtt"), result);
+        Assert.Equal(Path.Combine(_tempRoot, "input.sbv"), result);
     }
 
     [Fact]
@@ -57,11 +57,11 @@ public class OutputFileNameTest : IDisposable
     {
         var input = Path.Combine(_tempRoot, "input.srt");
         File.WriteAllText(input, "");
-        File.WriteAllText(Path.Combine(_tempRoot, "input.vtt"), "preexisting");
+        File.WriteAllText(Path.Combine(_tempRoot, "input.sbv"), "preexisting");
 
         var result = SubtitleConverter.ResolveOutputFileName(input, Opts(overwrite: false));
 
-        Assert.Equal(Path.Combine(_tempRoot, "input_2.vtt"), result);
+        Assert.Equal(Path.Combine(_tempRoot, "input_2.sbv"), result);
     }
 
     [Fact]
@@ -69,13 +69,13 @@ public class OutputFileNameTest : IDisposable
     {
         var input = Path.Combine(_tempRoot, "input.srt");
         File.WriteAllText(input, "");
-        File.WriteAllText(Path.Combine(_tempRoot, "input.vtt"), "");
-        File.WriteAllText(Path.Combine(_tempRoot, "input_2.vtt"), "");
-        File.WriteAllText(Path.Combine(_tempRoot, "input_3.vtt"), "");
+        File.WriteAllText(Path.Combine(_tempRoot, "input.sbv"), "");
+        File.WriteAllText(Path.Combine(_tempRoot, "input_2.sbv"), "");
+        File.WriteAllText(Path.Combine(_tempRoot, "input_3.sbv"), "");
 
         var result = SubtitleConverter.ResolveOutputFileName(input, Opts(overwrite: false));
 
-        Assert.Equal(Path.Combine(_tempRoot, "input_4.vtt"), result);
+        Assert.Equal(Path.Combine(_tempRoot, "input_4.sbv"), result);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class OutputFileNameTest : IDisposable
     {
         var input = Path.Combine(_tempRoot, "input.srt");
         File.WriteAllText(input, "");
-        var explicitOutput = Path.Combine(_tempRoot, "renamed.vtt");
+        var explicitOutput = Path.Combine(_tempRoot, "renamed.sbv");
 
         var result = SubtitleConverter.ResolveOutputFileName(input, Opts(overwrite: true, outputFilename: explicitOutput));
 
