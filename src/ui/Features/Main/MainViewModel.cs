@@ -214,6 +214,7 @@ public partial class MainViewModel :
     [ObservableProperty] private TextEncoding _selectedEncoding;
 
     [ObservableProperty] private ObservableCollection<string> _frameRates;
+    [ObservableProperty] private ObservableCollection<string> _assaStyles;
     [ObservableProperty] private string? _selectedFrameRate;
 
     [ObservableProperty] private string _statusTextLeft;
@@ -248,7 +249,6 @@ public partial class MainViewModel :
     [ObservableProperty] private bool _hasFormatStyle;
     [ObservableProperty] private bool _areAssaContentMenuItemsVisible;
     [ObservableProperty] private bool _selectCurrentSubtitleWhilePlaying;
-    [ObservableProperty] private bool _autoGenerateYtt = false;
     [ObservableProperty] private bool _waveformCenter;
     [ObservableProperty] private bool _isRightToLeftEnabled;
     [ObservableProperty] private bool _showAutoTranslateSelectedLines;
@@ -553,6 +553,7 @@ public partial class MainViewModel :
         _changeSubtitleHash = GetFastHash();
         _changeSubtitleHashOriginal = GetFastHashOriginal();
 
+        AssaStyles = new ObservableCollection<string>();
         FrameRates = new ObservableCollection<string>
         {
             "23.976",
@@ -8661,29 +8662,6 @@ public partial class MainViewModel :
 
         new BookmarkPersistence(GetUpdateSubtitle(), _subtitleFileName).Save();
 
-        if (AutoGenerateYtt)
-        {
-            try
-            {
-                string ytsubconverterPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ytsubconverter.exe");
-                if (System.IO.File.Exists(ytsubconverterPath))
-                {
-                    string outFile = System.IO.Path.ChangeExtension(_subtitleFileName, ".ytt");
-                    var processInfo = new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = ytsubconverterPath,
-                        Arguments = $"\"{_subtitleFileName}\" \"{outFile}\"",
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    };
-                    System.Diagnostics.Process.Start(processInfo);
-                }
-            }
-            catch
-            {
-                // Ignore errors
-            }
-        }
 
 
         if (result.ListPressed)
@@ -10021,6 +9999,42 @@ public partial class MainViewModel :
             _colorService.SetColor(selectedItems, color, GetUpdateSubtitle(), SelectedSubtitleFormat);
         }
 
+        _updateAudioVisualizer = true;
+    }
+
+    [RelayCommand]
+    private void TextBoxColorAssPrimary() => SetAssColorTag("1c");
+
+    [RelayCommand]
+    private void TextBoxColorAssSecondary() => SetAssColorTag("2c");
+
+    [RelayCommand]
+    private void TextBoxColorAssBorder() => SetAssColorTag("3c");
+
+    [RelayCommand]
+    private void TextBoxColorAssShadow() => SetAssColorTag("4c");
+
+    private async void SetAssColorTag(string assCode)
+    {
+        var tb = EditTextBox;
+        if (tb == null || tb.Text == null) return;
+        var result = await ShowDialogAsync<ColorPickerWindow, ColorPickerViewModel>();
+        if (!result.OkPressed) return;
+
+        var c = result.SelectedColor;
+        // BGR hex
+        var hex = $"&H{c.B:X2}{c.G:X2}{c.R:X2}&";
+        var tag = $"{{\\{assCode}{hex}}}";
+
+        var selectionStart = Math.Min(tb.SelectionStart, tb.SelectionEnd);
+        tb.Text = tb.Text.Insert(selectionStart, tag);
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            tb.Focus();
+            tb.SelectionStart = selectionStart + tag.Length;
+            tb.SelectionEnd = selectionStart + tag.Length;
+        });
         _updateAudioVisualizer = true;
     }
 
@@ -16519,6 +16533,32 @@ public partial class MainViewModel :
 
         new BookmarkPersistence(GetUpdateSubtitle(), _subtitleFileName).Save();
 
+        if (!isAutoSave && _subtitleFileName.EndsWith(".ass", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var ytsubconverterPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ytsubconverter.exe");
+                    if (System.IO.File.Exists(ytsubconverterPath))
+                    {
+                        var processInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = ytsubconverterPath,
+                            Arguments = $"\"{_subtitleFileName}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        System.Diagnostics.Process.Start(processInfo);
+                    }
+                }
+                catch
+                {
+                    // Ignore gracefully if exe fails
+                }
+            });
+        }
+
         return true;
     }
 
@@ -16573,6 +16613,32 @@ public partial class MainViewModel :
         _lastOpenSaveFormat = SelectedSubtitleFormat;
 
         new BookmarkPersistence(GetUpdateSubtitle(), _subtitleFileName).Save();
+
+        if (!isAutoSave && _subtitleFileName.EndsWith(".ass", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var ytsubconverterPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ytsubconverter.exe");
+                    if (System.IO.File.Exists(ytsubconverterPath))
+                    {
+                        var processInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = ytsubconverterPath,
+                            Arguments = $"\"{_subtitleFileName}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        System.Diagnostics.Process.Start(processInfo);
+                    }
+                }
+                catch
+                {
+                    // Ignore gracefully if exe fails
+                }
+            });
+        }
 
         return true;
     }
@@ -21832,6 +21898,12 @@ public partial class MainViewModel :
         }
 
         IsFormatAssa = SelectedSubtitleFormat is AdvancedSubStationAlpha;
+        if (IsFormatAssa || IsFormatSsa)
+        {
+            var styles = AdvancedSubStationAlpha.GetStylesFromHeader(_subtitle.Header);
+            AssaStyles.Clear();
+            foreach (var style in styles) AssaStyles.Add(style);
+        }
         IsFormatSsa = SelectedSubtitleFormat is SubStationAlpha;
         HasFormatStyle = SelectedSubtitleFormat is AdvancedSubStationAlpha or SubStationAlpha;
         ShowLayer = IsFormatAssa && Se.Settings.Appearance.ShowLayer;

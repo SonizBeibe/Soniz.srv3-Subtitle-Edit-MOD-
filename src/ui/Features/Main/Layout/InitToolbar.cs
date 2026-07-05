@@ -496,15 +496,7 @@ public static class InitToolbar
         }
 
 
-        var cbAutoGenerateYtt = new CheckBox
-        {
-            Content = "Auto-generar YTT/SRV3 (requiere ytsubconverter.exe)",
-            Margin = new Thickness(10, 0, 5, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            DataContext = vm,
-            [!CheckBox.IsCheckedProperty] = new Binding(nameof(vm.AutoGenerateYtt))
-        };
-        stackPanelRight.Children.Add(cbAutoGenerateYtt);
+
 
         var grid = new Grid
         {

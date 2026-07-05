@@ -80,6 +80,44 @@ public static class InitVideoPlayer
         control.SurfacePointerPressed += (_, _) => vm.VideoPlayerAreaPointerPressed();
         control.UserSeeked += vm.OnVideoPlayerUserSeeked;
 
+        control.VisualPosClicked += (sender, args) =>
+        {
+            if (vm.SelectedSubtitleFormat is not Nikse.SubtitleEdit.Core.SubtitleFormats.AdvancedSubStationAlpha) return;
+            var resX = 1280; // default ass width
+            var resY = 720;
+            int x = (int)Math.Round(args.X * resX);
+            int y = (int)Math.Round(args.Y * resY);
+
+            var tag = $"{{\\pos({x},{y})}}";
+            var tb = vm.EditTextBox;
+            if (tb != null && tb.Text != null)
+            {
+                tb.Text = System.Text.RegularExpressions.Regex.Replace(tb.Text, @"\\pos\(\d+,\s*\d+\)", string.Empty);
+                var selectionStart = Math.Min(tb.SelectionStart, tb.SelectionEnd);
+                tb.Text = tb.Text.Insert(selectionStart, tag);
+            }
+        };
+
+        control.VisualMoveClicked += (sender, args) =>
+        {
+            if (vm.SelectedSubtitleFormat is not Nikse.SubtitleEdit.Core.SubtitleFormats.AdvancedSubStationAlpha) return;
+            var resX = 1280;
+            var resY = 720;
+            int x1 = (int)Math.Round(args.X1 * resX);
+            int y1 = (int)Math.Round(args.Y1 * resY);
+            int x2 = (int)Math.Round(args.X2 * resX);
+            int y2 = (int)Math.Round(args.Y2 * resY);
+
+            var tag = $"{{\\move({x1},{y1},{x2},{y2})}}";
+            var tb = vm.EditTextBox;
+            if (tb != null && tb.Text != null)
+            {
+                tb.Text = System.Text.RegularExpressions.Regex.Replace(tb.Text, @"\\move\([^)]+\)", string.Empty);
+                var selectionStart = Math.Min(tb.SelectionStart, tb.SelectionEnd);
+                tb.Text = tb.Text.Insert(selectionStart, tag);
+            }
+        };
+
         Grid.SetRow(control, 0);
         mainGrid.Children.Add(control);
 

@@ -1547,6 +1547,61 @@ public static partial class InitListViewAndEditBox
         };
         panelSingleLineLengthsOriginal.Children.Add(singleLineLengthLabel);
 
+        var typesettingToolbar = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
+            Margin = new Thickness(0, 0, 0, 5),
+            IsVisible = true
+        };
+        typesettingToolbar.Bind(StackPanel.IsVisibleProperty, new Binding(nameof(vm.IsFormatAssa)));
+
+        var styleComboBox = new ComboBox
+        {
+            Width = 150,
+            [!ComboBox.ItemsSourceProperty] = new Binding(nameof(vm.AssaStyles)),
+            [!ComboBox.SelectedItemProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Style)}")
+        };
+        typesettingToolbar.Children.Add(styleComboBox);
+
+        var editStyleBtn = new Button { Content = "Edit", Command = vm.ShowAssaStylesCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(editStyleBtn, "Edit Styles");
+        typesettingToolbar.Children.Add(editStyleBtn);
+
+        typesettingToolbar.Children.Add(new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) });
+
+        var boldBtn = new Button { Content = "B", FontWeight = FontWeight.Bold, Command = vm.TextBoxBoldCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(boldBtn, "Toggle Bold");
+        typesettingToolbar.Children.Add(boldBtn);
+
+        var italicBtn = new Button { Content = "I", FontStyle = FontStyle.Italic, Command = vm.TextBoxItalicCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(italicBtn, "Toggle Italic");
+        typesettingToolbar.Children.Add(italicBtn);
+
+        typesettingToolbar.Children.Add(new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) });
+
+        var color1Btn = new Button { Content = "\\1c", Command = vm.TextBoxColorAssPrimaryCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(color1Btn, "Primary Color (\\1c)");
+        typesettingToolbar.Children.Add(color1Btn);
+
+        var color2Btn = new Button { Content = "\\2c", Command = vm.TextBoxColorAssSecondaryCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(color2Btn, "Secondary Color (\\2c)");
+        typesettingToolbar.Children.Add(color2Btn);
+
+        var color3Btn = new Button { Content = "\\3c", Command = vm.TextBoxColorAssBorderCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(color3Btn, "Border Color (\\3c)");
+        typesettingToolbar.Children.Add(color3Btn);
+
+        var color4Btn = new Button { Content = "\\4c", Command = vm.TextBoxColorAssShadowCommand, Margin = new Thickness(0, 0, 5, 0) };
+        ToolTip.SetTip(color4Btn, "Shadow Color (\\4c)");
+        typesettingToolbar.Children.Add(color4Btn);
+
+        textEditGrid.Children.Add(typesettingToolbar);
+        Grid.SetColumn(typesettingToolbar, 0);
+        Grid.SetRow(typesettingToolbar, 1);
+        Grid.SetColumnSpan(typesettingToolbar, 2);
+
+        // Adjust row 2 (which used to be row 1)
         var buttonPanel = new StackPanel
         {
             Orientation = Orientation.Vertical,
@@ -1604,7 +1659,7 @@ public static partial class InitListViewAndEditBox
             buttonPanel.Children.Add(removeFormattingButton);
         }
 
-        textEditGrid.Add(buttonPanel, 1, 2);
+        textEditGrid.Add(buttonPanel, 1, 3);
 
         Grid.SetColumn(textEditGrid, 1);
         editGrid.Children.Add(textEditGrid);

@@ -19,6 +19,7 @@ namespace Nikse.SubtitleEdit.Core.Forms.FixCommonErrors
 
         public void Fix(Subtitle subtitle, IFixCallbacks callbacks)
         {
+            return;
             // negative display time
             string fixAction = Language.FixOverlappingDisplayTime;
             int noOfOverlappingDisplayTimesFixed = 0;
