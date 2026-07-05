@@ -2724,7 +2724,10 @@ public class AudioVisualizer : Control
         {
             if (p.EndTime.TotalMilliseconds >= startPositionMilliseconds && p.StartTime.TotalMilliseconds <= endPositionMilliseconds)
             {
-                DrawParagraph(p, context, ref renderCtx);
+                if (_selectedParagraphsRenderSet.Contains(p))
+                {
+                    DrawParagraph(p, context, ref renderCtx);
+                }
             }
         }
     }
