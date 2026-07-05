@@ -907,25 +907,7 @@ public static class InitMenu
             },
         };
 
-        var menuItemAssaTools = new MenuItem
-        {
-            Header = l.AssaTools,
-            [!MenuItem.IsVisibleProperty] = new Binding(nameof(vm.IsFormatAssa)),
-        };
 
-        foreach (var item in assaTools.OrderBy(p => p.Header?.ToString()?.Replace("_", string.Empty)))
-        {
-            menuItemAssaTools.Items.Add(item);
-        }
-
-        menuItemAssaTools.Items.Add(new Separator());
-        menuItemAssaTools.Items.Add(new MenuItem
-        {
-            Header = l.FilterLayersForDisplayDotDotDot,
-            Command = vm.ShowPickLayerFilterCommand,
-        });
-
-        menu.Items.Add(menuItemAssaTools);
 
         var menuItemSsaTools = new MenuItem
         {

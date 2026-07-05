@@ -345,7 +345,6 @@ public static class InitNativeMacMenu
         assaItems.Items.Add(new NativeMenuItemSeparator());
         assaItems.Items.Add(Item(Clean(l.FilterLayersForDisplayDotDotDot), v => v.ShowPickLayerFilterCommand));
         var assaMenu = new NativeMenuItem(Clean(l.AssaTools)) { Menu = assaItems };
-        _visibilities.Add((assaMenu, v => v.IsFormatAssa, [nameof(MainViewModel.IsFormatAssa)]));
 
         // ── Assemble ──────────────────────────────────────────────────────────
         root.Items.Add(new NativeMenuItem(Clean(l.File)) { Menu = fileItems });
@@ -358,7 +357,6 @@ public static class InitNativeMacMenu
         root.Items.Add(new NativeMenuItem(Clean(l.Translate)) { Menu = translateItems });
         root.Items.Add(new NativeMenuItem(Clean(l.Options)) { Menu = optionsItems });
         root.Items.Add(new NativeMenuItem(Clean(l.HelpTitle)) { Menu = helpItems });
-        root.Items.Add(assaMenu);
     }
 
     // Called from LoadLanguage to rebuild all menu strings after a language switch.

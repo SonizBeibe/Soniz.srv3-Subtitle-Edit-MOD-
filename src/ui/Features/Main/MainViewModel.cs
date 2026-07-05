@@ -248,6 +248,7 @@ public partial class MainViewModel :
     [ObservableProperty] private bool _hasFormatStyle;
     [ObservableProperty] private bool _areAssaContentMenuItemsVisible;
     [ObservableProperty] private bool _selectCurrentSubtitleWhilePlaying;
+    [ObservableProperty] private bool _autoGenerateYtt = false;
     [ObservableProperty] private bool _waveformCenter;
     [ObservableProperty] private bool _isRightToLeftEnabled;
     [ObservableProperty] private bool _showAutoTranslateSelectedLines;
@@ -8659,6 +8660,31 @@ public partial class MainViewModel :
         }
 
         new BookmarkPersistence(GetUpdateSubtitle(), _subtitleFileName).Save();
+
+        if (AutoGenerateYtt)
+        {
+            try
+            {
+                string ytsubconverterPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ytsubconverter.exe");
+                if (System.IO.File.Exists(ytsubconverterPath))
+                {
+                    string outFile = System.IO.Path.ChangeExtension(_subtitleFileName, ".ytt");
+                    var processInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = ytsubconverterPath,
+                        Arguments = $"\"{_subtitleFileName}\" \"{outFile}\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    System.Diagnostics.Process.Start(processInfo);
+                }
+            }
+            catch
+            {
+                // Ignore errors
+            }
+        }
+
 
         if (result.ListPressed)
         {

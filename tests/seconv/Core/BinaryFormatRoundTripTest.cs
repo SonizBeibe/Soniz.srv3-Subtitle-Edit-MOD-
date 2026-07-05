@@ -88,13 +88,13 @@ public class BinaryFormatRoundTripTest : IDisposable
         var result = await converter.ConvertAsync(new ConversionOptions
         {
             Patterns = [input],
-            Format = "WebVTT",
+            Format = "YouTubeSbv",
             OutputFolder = _tempRoot,
             Overwrite = true,
         });
 
         Assert.True(result.Success, string.Join("; ", result.Errors));
-        var bytes = await File.ReadAllBytesAsync(Path.Combine(_tempRoot, "in.vtt"), TestContext.Current.CancellationToken);
+        var bytes = await File.ReadAllBytesAsync(Path.Combine(_tempRoot, "in.sbv"), TestContext.Current.CancellationToken);
         Assert.True(bytes.Length >= 3);
         Assert.Equal(0xEF, bytes[0]);
         Assert.Equal(0xBB, bytes[1]);
