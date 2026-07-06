@@ -83,8 +83,16 @@ public static class InitVideoPlayer
         control.VisualPosClicked += (sender, args) =>
         {
             if (vm.SelectedSubtitleFormat is not Nikse.SubtitleEdit.Core.SubtitleFormats.AdvancedSubStationAlpha) return;
-            var resX = 1280; // default ass width
+
+            var resX = 1280;
             var resY = 720;
+            var assaStr = Nikse.SubtitleEdit.Core.SubtitleFormats.AdvancedSubStationAlpha.GetTagValueFromHeader("PlayResX", "[Script Info]", vm.GetUpdateSubtitle().Header);
+            if (int.TryParse(assaStr, out var width) && width > 0)
+                resX = width;
+            assaStr = Nikse.SubtitleEdit.Core.SubtitleFormats.AdvancedSubStationAlpha.GetTagValueFromHeader("PlayResY", "[Script Info]", vm.GetUpdateSubtitle().Header);
+            if (int.TryParse(assaStr, out var height) && height > 0)
+                resY = height;
+
             int x = (int)Math.Round(args.X * resX);
             int y = (int)Math.Round(args.Y * resY);
 
@@ -92,33 +100,14 @@ public static class InitVideoPlayer
             var tb = vm.EditTextBox;
             if (tb != null && tb.Text != null)
             {
-                tb.Text = System.Text.RegularExpressions.Regex.Replace(tb.Text, @"\\pos\(\d+,\s*\d+\)", string.Empty);
+                tb.Text = System.Text.RegularExpressions.Regex.Replace(tb.Text, @"{\\pos\([^}]*\)}", string.Empty);
+                tb.Text = System.Text.RegularExpressions.Regex.Replace(tb.Text, @"\\pos\([^)]*\)", string.Empty);
                 var selectionStart = Math.Min(tb.SelectionStart, tb.SelectionEnd);
                 tb.Text = tb.Text.Insert(selectionStart, tag);
             }
         };
 
-        control.VisualMoveClicked += (sender, args) =>
-        {
-            if (vm.SelectedSubtitleFormat is not Nikse.SubtitleEdit.Core.SubtitleFormats.AdvancedSubStationAlpha) return;
-            var resX = 1280;
-            var resY = 720;
-            int x1 = (int)Math.Round(args.X1 * resX);
-            int y1 = (int)Math.Round(args.Y1 * resY);
-            int x2 = (int)Math.Round(args.X2 * resX);
-            int y2 = (int)Math.Round(args.Y2 * resY);
-
-            var tag = $"{{\\move({x1},{y1},{x2},{y2})}}";
-            var tb = vm.EditTextBox;
-            if (tb != null && tb.Text != null)
-            {
-                tb.Text = System.Text.RegularExpressions.Regex.Replace(tb.Text, @"\\move\([^)]+\)", string.Empty);
-                var selectionStart = Math.Min(tb.SelectionStart, tb.SelectionEnd);
-                tb.Text = tb.Text.Insert(selectionStart, tag);
-            }
-        };
-
-        Grid.SetRow(control, 0);
+                Grid.SetRow(control, 0);
         mainGrid.Children.Add(control);
 
         return mainGrid;

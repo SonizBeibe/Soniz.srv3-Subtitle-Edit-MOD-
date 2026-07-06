@@ -1085,34 +1085,85 @@ public static partial class InitListViewAndEditBox
         dropHost.AddHandler(InputElement.PointerReleasedEvent, vm.SubtitleGrid_PointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
         dropHost.AddHandler(InputElement.PointerMovedEvent, vm.SubtitleGrid_PointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        // Edit area - restructured with time controls on left, multiline text on right
+
+        // Edit area - redesigned to match Aegisub layout
         var editGrid = new Grid
         {
             Margin = new Thickness(10),
-            ColumnDefinitions = new ColumnDefinitions("Auto, *"), // Two columns: left for time controls, right for text
-            RowDefinitions = new RowDefinitions("Auto")
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto")
         };
 
-        // Left panel for time controls
+        // --- Row 0: Comment, Style Selector, Actor, Effect ---
+        var topRowPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 10,
+            Margin = new Thickness(0, 0, 0, 5)
+        };
+        topRowPanel.Bind(StackPanel.IsVisibleProperty, new Binding(nameof(vm.IsFormatAssa)));
+
+        var commentCheckBox = new CheckBox
+        {
+            Content = "Comment",
+            VerticalAlignment = VerticalAlignment.Center,
+            [!CheckBox.IsCheckedProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.IsComment)}") { Mode = BindingMode.TwoWay }
+        };
+        topRowPanel.Children.Add(commentCheckBox);
+
+        var styleComboBox = new ComboBox
+        {
+            Width = 150,
+            [!ComboBox.ItemsSourceProperty] = new Binding(nameof(vm.AssaStyles)),
+            [!ComboBox.SelectedItemProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Style)}") { Mode = BindingMode.TwoWay }
+        };
+        styleComboBox.SelectionChanged += (s, e) =>
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is string styleName)
+            {
+                if (vm.SetStyleForSelectedLinesCommand.CanExecute(styleName))
+                {
+                    vm.SetStyleForSelectedLinesCommand.Execute(styleName);
+                }
+            }
+        };
+        topRowPanel.Children.Add(styleComboBox);
+
+        var editStyleBtn = new Button { Content = "Edit", Command = vm.ShowAssaStylesCommand };
+        ToolTip.SetTip(editStyleBtn, "Edit Styles");
+        topRowPanel.Children.Add(editStyleBtn);
+
+        var actorLabel = new TextBlock { Text = Se.Language.General.Actor, VerticalAlignment = VerticalAlignment.Center };
+        topRowPanel.Children.Add(actorLabel);
+        var actorTextBox = new TextBox
+        {
+            Width = 120,
+            [!TextBox.TextProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Actor)}") { Mode = BindingMode.TwoWay }
+        };
+        topRowPanel.Children.Add(actorTextBox);
+
+        var effectLabel = new TextBlock { Text = Se.Language.General.Effect, VerticalAlignment = VerticalAlignment.Center };
+        topRowPanel.Children.Add(effectLabel);
+        var effectTextBox = new TextBox
+        {
+            Width = 120,
+            [!TextBox.TextProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Effect)}") { Mode = BindingMode.TwoWay }
+        };
+        topRowPanel.Children.Add(effectTextBox);
+
+        Grid.SetRow(topRowPanel, 0);
+        editGrid.Children.Add(topRowPanel);
+
+        // --- Row 1: Time Controls (Start, End, Duration) ---
         var timeControlsPanel = new StackPanel
         {
-            Spacing = 6,
-            Margin = new Thickness(0, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Top,
+            Orientation = Orientation.Horizontal,
+            Spacing = 10,
+            Margin = new Thickness(0, 0, 0, 5)
         };
-        
-        // Start Time controls
-        var startTimePanel = new StackPanel
-        {
-            Spacing = 0,
-            Orientation = Orientation.Vertical,
-            Margin = new Thickness(0, 0, 10, vm.ShowUpDownLabels ? 0 : 2),
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownStartTime));
-        var startTimeLabel = new TextBlock
-        {
-            Text = Se.Language.General.Show,
-            FontWeight = FontWeight.Bold
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
+
+        // Start Time
+        var startTimePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 }.WithBindVisible(vm, nameof(vm.ShowUpDownStartTime));
+        var startTimeLabel = new TextBlock { Text = Se.Language.General.StartTime, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeight.Bold }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
         startTimePanel.Children.Add(startTimeLabel);
         var timeCodeUpDown = new TimeCodeUpDown
         {
@@ -1120,192 +1171,123 @@ public static partial class InitListViewAndEditBox
             UseVideoOffset = true,
             [AutomationProperties.NameProperty] = Se.Language.General.StartTime,
         };
-        // With a separate end-time editor, moving start should keep the end fixed
-        // (StartTimeOnly). Without one, moving start drags the whole line keeping
-        // its duration (StartTimeKeepDuration).
-        var startTimeBindingName = nameof(vm.SelectedSubtitle) + "." + (Se.Settings.Appearance.ShowUpDownEndTime
-            ? nameof(SubtitleLineViewModel.StartTimeOnly)
-            : nameof(SubtitleLineViewModel.StartTimeKeepDuration));
-        timeCodeUpDown[!TimeCodeUpDown.ValueProperty] = new Binding(startTimeBindingName)
-        {
-            Mode = BindingMode.TwoWay,
-        };
-
-        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints)
-        {
-            ToolTip.SetTip(timeCodeUpDown, Se.Language.General.Show);
-        }
+        var startTimeBindingName = nameof(vm.SelectedSubtitle) + "." + (Se.Settings.Appearance.ShowUpDownEndTime ? nameof(SubtitleLineViewModel.StartTimeOnly) : nameof(SubtitleLineViewModel.StartTimeKeepDuration));
+        timeCodeUpDown[!TimeCodeUpDown.ValueProperty] = new Binding(startTimeBindingName) { Mode = BindingMode.TwoWay };
         timeCodeUpDown.Bind(TimeCodeUpDown.IsEnabledProperty, new Binding(nameof(vm.LockTimeCodes)) { Mode = BindingMode.TwoWay, Converter = inverseBooleanConverter });
-        startTimePanel.Children.Add(timeCodeUpDown);
         timeCodeUpDown.ValueChanged += vm.StartTimeChanged;
+        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints) ToolTip.SetTip(timeCodeUpDown, Se.Language.General.StartTime);
+        startTimePanel.Children.Add(timeCodeUpDown);
         timeControlsPanel.Children.Add(startTimePanel);
 
-
-        // End Time controls
-        var endTimePanel = new StackPanel
-        {
-            Spacing = 0,
-            Orientation = Orientation.Vertical,
-            Margin = new Thickness(0, 0, 10, vm.ShowUpDownLabels ? 0 : 2),
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownEndTime));
-        var endTimeLabel = new TextBlock
-        {
-            Text = Se.Language.General.Hide,
-            FontWeight = FontWeight.Bold
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
+        // End Time
+        var endTimePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 }.WithBindVisible(vm, nameof(vm.ShowUpDownEndTime));
+        var endTimeLabel = new TextBlock { Text = Se.Language.General.EndTime, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeight.Bold }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
         endTimePanel.Children.Add(endTimeLabel);
         var endCodeUpDown = new TimeCodeUpDown
         {
             DataContext = vm,
             [AutomationProperties.NameProperty] = Se.Language.General.EndTime,
-            [!TimeCodeUpDown.ValueProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.EndTime)}")
-            {
-                Mode = BindingMode.TwoWay,
-            }
+            [!TimeCodeUpDown.ValueProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.EndTime)}") { Mode = BindingMode.TwoWay }
         };
-        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints)
-        {
-            ToolTip.SetTip(endCodeUpDown, Se.Language.General.Hide);
-        }
         endCodeUpDown.Bind(TimeCodeUpDown.IsEnabledProperty, new Binding(nameof(vm.LockTimeCodes)) { Mode = BindingMode.TwoWay, Converter = inverseBooleanConverter });
-        endTimePanel.Children.Add(endCodeUpDown);
         endCodeUpDown.ValueChanged += vm.EndTimeChanged;
+        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints) ToolTip.SetTip(endCodeUpDown, Se.Language.General.EndTime);
+        endTimePanel.Children.Add(endCodeUpDown);
         timeControlsPanel.Children.Add(endTimePanel);
 
-        // Duration display
-        var durationPanel = new StackPanel
-        {
-            Spacing = 0,
-            Orientation = Orientation.Vertical,
-            Margin = new Thickness(0, 0, 10, vm.ShowUpDownLabels ? 0 : 2),
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownDuration));
-        var durationLabel = new TextBlock
-        {
-            Text = Se.Language.General.Duration,
-            FontWeight = FontWeight.Bold,
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
+        // Duration
+        var durationPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5 }.WithBindVisible(vm, nameof(vm.ShowUpDownDuration));
+        var durationLabel = new TextBlock { Text = Se.Language.General.Duration, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeight.Bold }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
         durationPanel.Children.Add(durationLabel);
         var durationUpDown = new SecondsUpDown
         {
             DataContext = vm,
             [AutomationProperties.NameProperty] = Se.Language.General.Duration,
-            [!SecondsUpDown.ValueProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Duration)}")
-            {
-                Mode = BindingMode.TwoWay,
-            },
+            [!SecondsUpDown.ValueProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Duration)}") { Mode = BindingMode.TwoWay },
             [!SecondsUpDown.BackgroundProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.DurationBackgroundBrush)}")
         };
-        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints)
-        {
-            ToolTip.SetTip(durationUpDown, Se.Language.General.Duration);
-        }
         durationUpDown.Bind(SecondsUpDown.IsEnabledProperty, new Binding(nameof(vm.LockTimeCodes)) { Mode = BindingMode.TwoWay, Converter = inverseBooleanConverter });
         durationUpDown.ValueChanged += (_, _) => vm.DurationChanged();
+        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints) ToolTip.SetTip(durationUpDown, Se.Language.General.Duration);
         durationPanel.Children.Add(durationUpDown);
         timeControlsPanel.Children.Add(durationPanel);
 
-
-        // Layer display
+        // Layer
         var panelLayer = new StackPanel
         {
-            Spacing = 0,
-            Orientation = Orientation.Vertical,
+            Spacing = 5,
+            Orientation = Orientation.Horizontal,
             [!Visual.IsVisibleProperty] = new Binding(nameof(vm.ShowLayer)),
-            Margin = new Thickness(0, 0, 10, 0),
         };
-        var labelLayer = new TextBlock
-        {
-            Text = Se.Language.General.Layer,
-            FontWeight = FontWeight.Bold,
-        }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
+        var labelLayer = new TextBlock { Text = Se.Language.General.Layer, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeight.Bold }.WithBindVisible(vm, nameof(vm.ShowUpDownLabels));
         panelLayer.Children.Add(labelLayer);
         var upDownLayer = UiUtil.MakeNumericUpDownInt(int.MinValue, int.MaxValue, 0, double.NaN, vm, $"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Layer)}");
         AutomationProperties.SetName(upDownLayer, Se.Language.General.Layer);
-        upDownLayer.HorizontalAlignment = HorizontalAlignment.Stretch;
-        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints)
-        {
-            ToolTip.SetTip(upDownLayer, Se.Language.General.Layer);
-        }
+        if (!vm.ShowUpDownLabels && Se.Settings.Appearance.ShowHints) ToolTip.SetTip(upDownLayer, Se.Language.General.Layer);
         panelLayer.Children.Add(upDownLayer);
         timeControlsPanel.Children.Add(panelLayer);
 
-        if (!Se.Settings.Appearance.ShowUpDownStartTime ||
-            !Se.Settings.Appearance.ShowUpDownEndTime || 
-            !Se.Settings.Appearance.ShowUpDownDuration)
-        {
-            if (Se.Settings.Appearance.ShowUpDownLabels)
-            {
-                timeControlsPanel.Margin = new Thickness(0, 4, 0, 0);
-            }
-            else
-            {
-                //TODO: find better way to top-align with textbox
-                timeControlsPanel.Margin = new Thickness(0, 18, 0, 0);
-            }
-        }
-        
-        Grid.SetColumn(timeControlsPanel, 0);
+        Grid.SetRow(timeControlsPanel, 1);
         editGrid.Children.Add(timeControlsPanel);
 
-        // Right panel for text editing (show/duration is to the left)
+        // --- Row 2: Formatting Toolbar ---
+        var typesettingToolbar = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
+            Margin = new Thickness(0, 0, 0, 5),
+            IsVisible = true
+        };
+
+        var boldBtn = new Button { Content = "B", FontWeight = FontWeight.Bold, Command = vm.TextBoxBoldCommand };
+        ToolTip.SetTip(boldBtn, "Toggle Bold");
+        typesettingToolbar.Children.Add(boldBtn);
+
+        var italicBtn = new Button { Content = "I", FontStyle = FontStyle.Italic, Command = vm.TextBoxItalicCommand };
+        ToolTip.SetTip(italicBtn, "Toggle Italic");
+        typesettingToolbar.Children.Add(italicBtn);
+
+        var underlineBtn = new Button { Content = "U", Command = vm.TextBoxUnderlineCommand };
+        ToolTip.SetTip(underlineBtn, "Toggle Underline");
+        typesettingToolbar.Children.Add(underlineBtn);
+
+        typesettingToolbar.Children.Add(new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) });
+
+        var color1Btn = new Button { Content = "\\1c", Command = vm.TextBoxColorAssPrimaryCommand };
+        ToolTip.SetTip(color1Btn, "Primary Color (\\1c)");
+        typesettingToolbar.Children.Add(color1Btn);
+
+        var color2Btn = new Button { Content = "\\2c", Command = vm.TextBoxColorAssSecondaryCommand };
+        ToolTip.SetTip(color2Btn, "Secondary Color (\\2c)");
+        typesettingToolbar.Children.Add(color2Btn);
+
+        var color3Btn = new Button { Content = "\\3c", Command = vm.TextBoxColorAssBorderCommand };
+        ToolTip.SetTip(color3Btn, "Border Color (\\3c)");
+        typesettingToolbar.Children.Add(color3Btn);
+
+        var color4Btn = new Button { Content = "\\4c", Command = vm.TextBoxColorAssShadowCommand };
+        ToolTip.SetTip(color4Btn, "Shadow Color (\\4c)");
+        typesettingToolbar.Children.Add(color4Btn);
+
+        typesettingToolbar.Children.Add(new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) });
+
+        var karaokeBtn = new Avalonia.Controls.Primitives.ToggleButton
+        {
+            Content = "Karaoke Mode",
+            [!Avalonia.Controls.Primitives.ToggleButton.IsCheckedProperty] = new Binding(nameof(vm.IsKaraokeModeEnabled)) { Mode = BindingMode.TwoWay }
+        };
+        ToolTip.SetTip(karaokeBtn, "Toggle Karaoke Mode (Highlight \\k tags)");
+        typesettingToolbar.Children.Add(karaokeBtn);
+
+        Grid.SetRow(typesettingToolbar, 2);
+        editGrid.Children.Add(typesettingToolbar);
+
+        // --- Row 3: Text Editing Area ---
         var textEditGrid = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("*,*,Auto"),
             RowDefinitions = new RowDefinitions("Auto,*,Auto"),
         };
-
-        var textLabel = new TextBlock
-        {
-            Text = Se.Language.General.Text,
-            FontWeight = FontWeight.Bold,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        var bookmarkIcon = new Icon
-        {
-            DataContext = vm,
-            Value = IconNames.Bookmark,
-            Foreground = new SolidColorBrush(Se.Settings.Appearance.BookmarkColor.FromHexToColor()),
-            [!Visual.IsVisibleProperty] = new Binding(nameof(vm.SelectedSubtitle) + "." + nameof(SubtitleLineViewModel.Bookmark)) { Converter = notNullConverter },
-            Margin = new Thickness(6, 0, 0, 1),
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        bookmarkIcon.PointerPressed += (_, __) =>
-        {
-            if (vm.AddOrEditBookmarkCommand.CanExecute(null))
-            {
-                vm.AddOrEditBookmarkCommand.Execute(null);
-            }
-        };
-        var bookmarkLabel = new Label
-        {
-            FontSize = 10,
-            VerticalAlignment = VerticalAlignment.Center,
-            DataContext = vm,
-            Foreground = new SolidColorBrush(Se.Settings.Appearance.BookmarkColor.FromHexToColor()),
-            [!Label.ContentProperty] = new Binding(nameof(vm.SelectedSubtitle) + "." + nameof(SubtitleLineViewModel.Bookmark)) { Converter = textOneLineShortConverter },
-            [!Label.IsVisibleProperty] = new Binding(nameof(vm.SelectedSubtitle) + "." + nameof(SubtitleLineViewModel.Bookmark)) { Converter = notNullConverter },
-        };
-        bookmarkLabel.PointerPressed += (_, __) =>
-        {
-            if (vm.AddOrEditBookmarkCommand.CanExecute(null))
-            {
-                vm.AddOrEditBookmarkCommand.Execute(null);
-            }
-        };
-        var panelBookmark = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Center,
-            [!Label.IsVisibleProperty] = new Binding(nameof(vm.SelectedSubtitle)) { Converter = notNullConverter },
-            Children =
-            {
-                bookmarkIcon,
-                bookmarkLabel,
-            }
-        };
-
 
         var panelForTextLabel = new StackPanel
         {
@@ -1314,11 +1296,42 @@ public static partial class InitListViewAndEditBox
             VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                textLabel,
-                panelBookmark,
+                new TextBlock
+                {
+                    Text = Se.Language.General.Text,
+                    FontWeight = FontWeight.Bold,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    [!Label.IsVisibleProperty] = new Binding(nameof(vm.SelectedSubtitle)) { Converter = notNullConverter },
+                    Children =
+                    {
+                        new Icon
+                        {
+                            DataContext = vm,
+                            Value = IconNames.Bookmark,
+                            Foreground = new SolidColorBrush(Se.Settings.Appearance.BookmarkColor.FromHexToColor()),
+                            [!Visual.IsVisibleProperty] = new Binding(nameof(vm.SelectedSubtitle) + "." + nameof(SubtitleLineViewModel.Bookmark)) { Converter = notNullConverter },
+                            Margin = new Thickness(6, 0, 0, 1),
+                            VerticalAlignment = VerticalAlignment.Center,
+                        },
+                        new Label
+                        {
+                            FontSize = 10,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            DataContext = vm,
+                            Foreground = new SolidColorBrush(Se.Settings.Appearance.BookmarkColor.FromHexToColor()),
+                            [!Label.ContentProperty] = new Binding(nameof(vm.SelectedSubtitle) + "." + nameof(SubtitleLineViewModel.Bookmark)) { Converter = textOneLineShortConverter },
+                            [!Label.IsVisibleProperty] = new Binding(nameof(vm.SelectedSubtitle) + "." + nameof(SubtitleLineViewModel.Bookmark)) { Converter = notNullConverter },
+                        }
+                    }
+                }
             }
         };
-
 
         textEditGrid.Children.Add(panelForTextLabel);
 
@@ -1329,19 +1342,13 @@ public static partial class InitListViewAndEditBox
             FontSize = 12,
             Padding = new Thickness(2, 2, 2, 2),
         };
-        textCharsSecLabel.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextCharactersPerSecond))
-        {
-            Mode = BindingMode.OneWay
-        });
-        textCharsSecLabel.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextCharactersPerSecondBackground))
-        {
-            Mode = BindingMode.OneWay
-        });
+        textCharsSecLabel.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextCharactersPerSecond)) { Mode = BindingMode.OneWay });
+        textCharsSecLabel.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextCharactersPerSecondBackground)) { Mode = BindingMode.OneWay });
         textEditGrid.Children.Add(textCharsSecLabel);
-        var textEditor = MakeTextBox(vm);
 
-        textEditGrid.Children.Add(textEditor);
-        Grid.SetRow(textEditor, 1);
+        var textEditorBorderObj = MakeTextEditorBorder(vm);
+        textEditGrid.Children.Add(textEditorBorderObj);
+        Grid.SetRow(textEditorBorderObj, 1);
 
         var textTotalLengthLabel = new TextBlock
         {
@@ -1350,126 +1357,25 @@ public static partial class InitListViewAndEditBox
             FontSize = 12,
             Padding = new Thickness(2, 2, 2, 2),
         };
-        textTotalLengthLabel.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextTotalLength))
-        {
-            Mode = BindingMode.OneWay
-        });
-        textTotalLengthLabel.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextTotalLengthBackground))
-        {
-            Mode = BindingMode.OneWay
-        });
+        textTotalLengthLabel.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextTotalLength)) { Mode = BindingMode.OneWay });
+        textTotalLengthLabel.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextTotalLengthBackground)) { Mode = BindingMode.OneWay });
         textEditGrid.Children.Add(textTotalLengthLabel);
         Grid.SetRow(textTotalLengthLabel, 2);
 
-
-        var panelSingleLineLengths = new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
-            Orientation = Orientation.Horizontal,
-        };
+        var panelSingleLineLengths = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Orientation = Orientation.Horizontal };
         vm.PanelSingleLineLengths = panelSingleLineLengths;
         textEditGrid.Children.Add(panelSingleLineLengths);
         Grid.SetRow(panelSingleLineLengths, 2);
 
-        // Create a Flyout for the TextEditor
-        // The TextBox may have TextAlignment=Center; that inherited property would otherwise flow
-        // into the flyout's menu items. Override it at the presenter level so items are always left-aligned.
-        var flyoutTextBoxPresenterTheme = new ControlTheme(typeof(MenuFlyoutPresenter))
-        {
-            BasedOn = Application.Current?.FindResource(typeof(MenuFlyoutPresenter)) as ControlTheme,
-            Setters =
-            {
-                new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Left),
-            }
-        };
-        var flyoutTextBox = new MenuFlyout
-        {
-            Placement = PlacementMode.Pointer,
-            FlyoutPresenterTheme = flyoutTextBoxPresenterTheme,
-        };
-        textEditor.ContextFlyout = flyoutTextBox;
-        flyoutTextBox.Opening += vm.TextBoxContextOpening;
-
-        var cutMenuItem = new MenuItem { Header = Se.Language.General.Cut };
-        cutMenuItem.Command = vm.TextBoxCutCommand;
-        flyoutTextBox.Items.Add(cutMenuItem);
-
-        var copyMenuItem = new MenuItem { Header = Se.Language.General.Copy };
-        copyMenuItem.Command = vm.TextBoxCopyCommand;
-        flyoutTextBox.Items.Add(copyMenuItem);
-
-        var pasteMenuItem = new MenuItem { Header = Se.Language.General.Paste };
-        pasteMenuItem.Command = vm.TextBoxPasteCommand;
-        flyoutTextBox.Items.Add(pasteMenuItem);
-
-        flyoutTextBox.Items.Add(new Separator());
-
-        var menuItemTextBoxSplitAtCursor = new MenuItem { Header = Se.Language.General.SplitLineAtTextBoxCursorPosition };
-        menuItemTextBoxSplitAtCursor.Command = vm.SplitAtTextBoxCursorPositionCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxSplitAtCursor);
-
-        var menuItemTextBoxSplitAtCursorAndVideoPosition = new MenuItem { Header = Se.Language.General.SplitLineAtVideoAndTextBoxPosition };
-        menuItemTextBoxSplitAtCursorAndVideoPosition.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.IsTextBoxSplitAtCursorAndVideoPositionVisible)));
-        menuItemTextBoxSplitAtCursorAndVideoPosition.Command = vm.SplitAtVideoPositionAndTextBoxCursorPositionCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxSplitAtCursorAndVideoPosition);
-
-        flyoutTextBox.Items.Add(new Separator());
-
-        var menuItemTextBoxRemoveAllFormatting = new MenuItem { Header = Se.Language.General.RemoveAllFormatting };
-        menuItemTextBoxRemoveAllFormatting.Command = vm.TextBoxRemoveAllFormattingCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxRemoveAllFormatting);
-
-        var menuItemTextBoxBold = new MenuItem { Header = Se.Language.General.Bold };
-        menuItemTextBoxBold.Command = vm.TextBoxBoldCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxBold);
-
-        var menuItemTextBoxItalic = new MenuItem { Header = Se.Language.General.Italic };
-        menuItemTextBoxItalic.Command = vm.TextBoxItalicCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxItalic);
-
-        var menuItemTextBoxUnderline = new MenuItem { Header = Se.Language.General.Underline };
-        menuItemTextBoxUnderline.Command = vm.TextBoxUnderlineCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxUnderline);
-
-        var menuItemTextBoxFontName = new MenuItem { Header = Se.Language.General.FontNameDotDotDot };
-        menuItemTextBoxFontName.Command = vm.TextBoxFontNameCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxFontName);
-
-        var menuItemTextBoxColor = new MenuItem { Header = Se.Language.General.Color };
-        menuItemTextBoxColor.Command = vm.TextBoxColorCommand;
-        flyoutTextBox.Items.Add(menuItemTextBoxColor);
-
-        flyoutTextBox.Items.Add(new Separator());
-
-        var unicodeSymbols = Se.Settings.Tools.UnicodeSymbolsToInsert.Split(';', System.StringSplitOptions.RemoveEmptyEntries);
-        if (unicodeSymbols.Length > 0)
-        {
-            var unicodeMenuItem = new MenuItem { Header = Se.Language.Main.InsertUnicodeSymbol };
-            foreach (var symbol in unicodeSymbols)
-            {
-                var symbolItem = new MenuItem { Header = symbol };
-                symbolItem.Command = vm.TextBoxInsertUnicodeSymbolCommand;
-                symbolItem.CommandParameter = symbol;
-                unicodeMenuItem.Items.Add(symbolItem);
-            }
-            flyoutTextBox.Items.Add(unicodeMenuItem);
-        }
-
-
-        // translation mode (original text)
+        // Original Text
         var textLabelOriginal = new TextBlock
         {
-            Text = Se.Language.General.OriginalText,
+            Text = "Original Text",
             FontWeight = FontWeight.Bold,
-            Margin = new Thickness(3, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
         };
-        textEditGrid.Add(textLabelOriginal, 0, 1);
-        textLabelOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText))
-        {
-            Mode = BindingMode.OneWay,
-            Source = vm
-        });
+        textEditGrid.Add(textLabelOriginal, 1, 0);
+        textLabelOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText)) { Mode = BindingMode.OneWay, Source = vm });
 
         var textCharsSecLabelOriginal = new TextBlock
         {
@@ -1478,28 +1384,14 @@ public static partial class InitListViewAndEditBox
             FontSize = 12,
             Padding = new Thickness(2, 2, 2, 2),
         };
-        textCharsSecLabelOriginal.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextCharactersPerSecondOriginal))
-        {
-            Mode = BindingMode.OneWay
-        });
-        textCharsSecLabelOriginal.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextCharactersPerSecondBackgroundOriginal))
-        {
-            Mode = BindingMode.OneWay
-        });
-        textEditGrid.Add(textCharsSecLabelOriginal, 0, 1);
-        textCharsSecLabelOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText))
-        {
-            Mode = BindingMode.OneWay,
-            Source = vm
-        });
+        textCharsSecLabelOriginal.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextCharactersPerSecondOriginal)) { Mode = BindingMode.OneWay });
+        textCharsSecLabelOriginal.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextCharactersPerSecondBackgroundOriginal)) { Mode = BindingMode.OneWay });
+        textEditGrid.Add(textCharsSecLabelOriginal, 1, 0);
+        textCharsSecLabelOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText)) { Mode = BindingMode.OneWay, Source = vm });
 
-        var textBoxOriginal = MakeTextBoxOriginal(vm);
-        textEditGrid.Add(textBoxOriginal, 1, 1);
-        textBoxOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText))
-        {
-            Mode = BindingMode.OneWay,
-            Source = vm
-        });
+        var textEditorOriginal = MakeTextEditorOriginal(vm);
+        textEditGrid.Add(textEditorOriginal, 1, 1);
+        textEditorOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText)) { Mode = BindingMode.OneWay, Source = vm });
 
         var textTotalLengthLabelOriginal = new TextBlock
         {
@@ -1508,160 +1400,19 @@ public static partial class InitListViewAndEditBox
             FontSize = 12,
             Padding = new Thickness(2, 2, 2, 2),
         };
-        textTotalLengthLabelOriginal.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextTotalLengthOriginal))
-        {
-            Mode = BindingMode.OneWay
-        });
-        textTotalLengthLabelOriginal.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextTotalLengthBackgroundOriginal))
-        {
-            Mode = BindingMode.OneWay
-        });
+        textTotalLengthLabelOriginal.Bind(TextBlock.TextProperty, new Binding(nameof(vm.EditTextTotalLengthOriginal)) { Mode = BindingMode.OneWay });
+        textTotalLengthLabelOriginal.Bind(TextBlock.BackgroundProperty, new Binding(nameof(vm.EditTextTotalLengthBackgroundOriginal)) { Mode = BindingMode.OneWay });
         textEditGrid.Add(textTotalLengthLabelOriginal, 2, 1);
-        textTotalLengthLabelOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText))
-        {
-            Mode = BindingMode.OneWay,
-            Source = vm
-        });
+        textTotalLengthLabelOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText)) { Mode = BindingMode.OneWay, Source = vm });
 
-
-        var panelSingleLineLengthsOriginal = new StackPanel
-        {
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
-            Orientation = Orientation.Horizontal,
-        };
+        var panelSingleLineLengthsOriginal = new StackPanel { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Orientation = Orientation.Horizontal };
         vm.PanelSingleLineLengthsOriginal = panelSingleLineLengthsOriginal;
         textEditGrid.Add(panelSingleLineLengthsOriginal, 2, 1);
         panelSingleLineLengthsOriginal.DataContext = vm;
-        panelSingleLineLengthsOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText))
-        {
-            Mode = BindingMode.OneWay,
-            Source = vm
-        });
-        // add label to panelSingleLineLengthsOriginal
-        var singleLineLengthLabel = new TextBlock
-        {
-            Text = "Line lengths: x/x",
-            FontWeight = FontWeight.Bold,
-            Margin = new Thickness(0, 0, 5, 0)
-        };
-        panelSingleLineLengthsOriginal.Children.Add(singleLineLengthLabel);
+        panelSingleLineLengthsOriginal.Bind(Visual.IsVisibleProperty, new Binding(nameof(vm.ShowColumnOriginalText)) { Mode = BindingMode.OneWay, Source = vm });
+        panelSingleLineLengthsOriginal.Children.Add(new TextBlock { Text = "Line lengths: x/x", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 5, 0) });
 
-        var typesettingToolbar = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 5,
-            Margin = new Thickness(0, 0, 0, 5),
-            IsVisible = true
-        };
-        typesettingToolbar.Bind(StackPanel.IsVisibleProperty, new Binding(nameof(vm.IsFormatAssa)));
-
-        var styleComboBox = new ComboBox
-        {
-            Width = 150,
-            [!ComboBox.ItemsSourceProperty] = new Binding(nameof(vm.AssaStyles)),
-            [!ComboBox.SelectedItemProperty] = new Binding($"{nameof(vm.SelectedSubtitle)}.{nameof(SubtitleLineViewModel.Style)}")
-        };
-        typesettingToolbar.Children.Add(styleComboBox);
-
-        var editStyleBtn = new Button { Content = "Edit", Command = vm.ShowAssaStylesCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(editStyleBtn, "Edit Styles");
-        typesettingToolbar.Children.Add(editStyleBtn);
-
-        typesettingToolbar.Children.Add(new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) });
-
-        var boldBtn = new Button { Content = "B", FontWeight = FontWeight.Bold, Command = vm.TextBoxBoldCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(boldBtn, "Toggle Bold");
-        typesettingToolbar.Children.Add(boldBtn);
-
-        var italicBtn = new Button { Content = "I", FontStyle = FontStyle.Italic, Command = vm.TextBoxItalicCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(italicBtn, "Toggle Italic");
-        typesettingToolbar.Children.Add(italicBtn);
-
-        typesettingToolbar.Children.Add(new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) });
-
-        var color1Btn = new Button { Content = "\\1c", Command = vm.TextBoxColorAssPrimaryCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(color1Btn, "Primary Color (\\1c)");
-        typesettingToolbar.Children.Add(color1Btn);
-
-        var color2Btn = new Button { Content = "\\2c", Command = vm.TextBoxColorAssSecondaryCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(color2Btn, "Secondary Color (\\2c)");
-        typesettingToolbar.Children.Add(color2Btn);
-
-        var color3Btn = new Button { Content = "\\3c", Command = vm.TextBoxColorAssBorderCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(color3Btn, "Border Color (\\3c)");
-        typesettingToolbar.Children.Add(color3Btn);
-
-        var color4Btn = new Button { Content = "\\4c", Command = vm.TextBoxColorAssShadowCommand, Margin = new Thickness(0, 0, 5, 0) };
-        ToolTip.SetTip(color4Btn, "Shadow Color (\\4c)");
-        typesettingToolbar.Children.Add(color4Btn);
-
-        textEditGrid.Children.Add(typesettingToolbar);
-        Grid.SetColumn(typesettingToolbar, 0);
-        Grid.SetRow(typesettingToolbar, 1);
-        Grid.SetColumnSpan(typesettingToolbar, 2);
-
-        // Adjust row 2 (which used to be row 1)
-        var buttonPanel = new StackPanel
-        {
-            Orientation = Orientation.Vertical,
-            Spacing = 3,
-            Margin = new Thickness(6,3,3,3)
-        };
-
-        if (Se.Settings.Appearance.TextBoxShowButtonAutoBreak)
-        {
-            var autoBreakButton = UiUtil.MakeButton(vm.AutoBreakCommand, IconNames.ScaleBalance);
-            if (Se.Settings.Appearance.ShowHints)
-            {
-                ToolTip.SetTip(autoBreakButton, Se.Language.Main.AutoBreakHint);
-            }
-            buttonPanel.Children.Add(autoBreakButton);
-        }
-
-        if (Se.Settings.Appearance.TextBoxShowButtonUnbreak)
-        {
-            var unbreakButton = UiUtil.MakeButton(vm.UnbreakCommand, IconNames.SetMerge);
-            if (Se.Settings.Appearance.ShowHints)
-            {
-                ToolTip.SetTip(unbreakButton, Se.Language.Main.UnbreakHint);
-            }
-            buttonPanel.Children.Add(unbreakButton);
-        }
-
-        if (Se.Settings.Appearance.TextBoxShowButtonItalic)
-        {
-            var italicButton = UiUtil.MakeButton(vm.ToggleLinesItalicOrSelectedTextCommand, IconNames.Italic);
-            if (Se.Settings.Appearance.ShowHints)
-            {
-                ToolTip.SetTip(italicButton, Se.Language.Main.ItalicHint);
-            }
-            buttonPanel.Children.Add(italicButton);
-        }
-
-        if (Se.Settings.Appearance.TextBoxShowButtonColor)
-        {
-            var colorButton = UiUtil.MakeButton(vm.ShowColorPickerCommand, IconNames.Palette);
-            if (Se.Settings.Appearance.ShowHints)
-            {
-                ToolTip.SetTip(colorButton, Se.Language.Main.ColorHint);
-            }
-            buttonPanel.Children.Add(colorButton);
-        }
-
-        if (Se.Settings.Appearance.TextBoxShowButtonRemoveFormatting)
-        {
-            var removeFormattingButton = UiUtil.MakeButton(vm.RemoveFormattingAllCommand, IconNames.FormatClear);
-            if (Se.Settings.Appearance.ShowHints)
-            {
-                ToolTip.SetTip(removeFormattingButton, Se.Language.Main.RemoveFormattingHint);
-            }
-            buttonPanel.Children.Add(removeFormattingButton);
-        }
-
-        textEditGrid.Add(buttonPanel, 1, 3);
-
-        Grid.SetColumn(textEditGrid, 1);
+        Grid.SetRow(textEditGrid, 3);
         editGrid.Children.Add(textEditGrid);
 
         Grid.SetRow(editGrid, 1);
@@ -1754,7 +1505,7 @@ public static partial class InitListViewAndEditBox
 
         if (Se.Settings.Appearance.SubtitleTextBoxColorTags)
         {
-            return MakeTextEditor(vm);
+            return MakeTextEditorBorder(vm);
         }
         else
         {
@@ -1794,9 +1545,9 @@ public static partial class InitListViewAndEditBox
         }
     }
 
-    private static Border MakeTextEditor(MainViewModel vm)
+    private static Border MakeTextEditorBorder(MainViewModel vm)
     {
-        var textEditor = MakeTextEditor();
+        var textEditor = MakeTextEditor(vm);
 
         var defaultBorderBrush = UiUtil.GetBorderBrush();
         var focusedBorderBrush = UiUtil.GetAccentBrush();
@@ -1830,7 +1581,7 @@ public static partial class InitListViewAndEditBox
         return textEditorBorder;
     }
 
-    private static TextEditor MakeTextEditor()
+    private static TextEditor MakeTextEditor(MainViewModel vm)
     {
         var textEditor = new TextEditor
         {
@@ -1851,7 +1602,21 @@ public static partial class InitListViewAndEditBox
         AutomationProperties.SetName(textEditor.TextArea, Se.Language.General.Text);
 
         // Add syntax highlighting transformer
-        textEditor.TextArea.TextView.LineTransformers.Add(new SubtitleSyntaxHighlighting());
+
+        var syntaxHighlighting = new SubtitleSyntaxHighlighting();
+        textEditor.TextArea.TextView.LineTransformers.Add(syntaxHighlighting);
+        if (vm != null)
+        {
+            vm.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(vm.IsKaraokeModeEnabled))
+                {
+                    syntaxHighlighting.IsKaraokeMode = vm.IsKaraokeModeEnabled;
+                    textEditor.TextArea.TextView.Redraw();
+                }
+            };
+        }
+
 
         if (!string.IsNullOrEmpty(Se.Settings.Appearance.SubtitleTextBoxAndGridFontName))
         {
@@ -1906,7 +1671,7 @@ public static partial class InitListViewAndEditBox
 
     private static Border MakeTextEditorOriginal(MainViewModel vm)
     {
-        var textEditor = MakeTextEditor();
+        var textEditor = MakeTextEditor(vm);
 
         var defaultBorderBrush = UiUtil.GetBorderBrush();
         var focusedBorderBrush = UiUtil.GetAccentBrush();

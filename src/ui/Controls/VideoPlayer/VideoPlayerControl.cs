@@ -362,14 +362,10 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
             stackPanel.Children.Add(separator);
 
             _btnVisualPos = new ToggleButton { Content = "\\pos", Margin = new Thickness(0, 0, 3, 0) };
-            _btnVisualPos.Click += (_, _) => { if (_btnVisualPos.IsChecked == true) _btnVisualMove.IsChecked = false; };
+
             ToolTip.SetTip(_btnVisualPos, "Visual Position Tool");
             stackPanel.Children.Add(_btnVisualPos);
 
-            _btnVisualMove = new ToggleButton { Content = "\\move", Margin = new Thickness(0, 0, 3, 0) };
-            _btnVisualMove.Click += (_, _) => { if (_btnVisualMove.IsChecked == true) _btnVisualPos.IsChecked = false; _moveClickCount = 0; };
-            ToolTip.SetTip(_btnVisualMove, "Visual Move Tool");
-            stackPanel.Children.Add(_btnVisualMove);
 
             _gridProgress.Children.Add(stackPanel);
             Grid.SetColumn(stackPanel, 0);
@@ -567,14 +563,9 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
         public bool IsSmpteTimingEnabled { get; set; }
 
         private ToggleButton? _btnVisualPos;
-        private ToggleButton? _btnVisualMove;
-        private int _moveClickCount = 0;
-        private double _moveStartX = 0;
-        private double _moveStartY = 0;
 
         public event EventHandler<(double X, double Y)>? VisualPosClicked;
-        public event EventHandler<(double X1, double Y1, double X2, double Y2)>? VisualMoveClicked;
-        private bool _surfaceLeftButtonDown;
+                private bool _surfaceLeftButtonDown;
 
         private void OnMainGridPointerPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -610,7 +601,7 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
             // This is a click on the video surface
             SurfacePointerPressed?.Invoke(this, e);
 
-            if (_btnVisualPos?.IsChecked == true || _btnVisualMove?.IsChecked == true)
+            if (_btnVisualPos?.IsChecked == true)
             {
                 var pt = e.GetPosition(_contentPresenter);
                 var bounds = _contentPresenter.Bounds;
@@ -620,26 +611,8 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
                     double pctX = pt.X / bounds.Width;
                     double pctY = pt.Y / bounds.Height;
 
-                    if (_btnVisualPos?.IsChecked == true)
-                    {
-                        VisualPosClicked?.Invoke(this, (pctX, pctY));
-                        _btnVisualPos.IsChecked = false;
-                    }
-                    else if (_btnVisualMove?.IsChecked == true)
-                    {
-                        if (_moveClickCount == 0)
-                        {
-                            _moveStartX = pctX;
-                            _moveStartY = pctY;
-                            _moveClickCount++;
-                        }
-                        else
-                        {
-                            VisualMoveClicked?.Invoke(this, (_moveStartX, _moveStartY, pctX, pctY));
-                            _moveClickCount = 0;
-                            _btnVisualMove.IsChecked = false;
-                        }
-                    }
+                    VisualPosClicked?.Invoke(this, (pctX, pctY));
+                    _btnVisualPos.IsChecked = false;
                 }
                 e.Handled = true;
                 return;
