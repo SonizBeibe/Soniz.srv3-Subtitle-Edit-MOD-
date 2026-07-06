@@ -1,56 +1,57 @@
 # SonizSRV3
 
-The subtitle editor but better :) 
-A specialized, high-performance fork designed specifically for advanced ASS typesetting and typographic animation.
+El editor de subtítulos pero mejor :) 
+Un fork especializado y de alto rendimiento diseñado específicamente para typesetting avanzado en ASS y animación tipográfica.
 
-> **⚠️ Acknowledgement & Credits:**
-> SonizSRV3 is a custom modification built upon the incredible foundation of [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit), created and maintained by Nikolaj Olsson (niksedk) and contributors. All core subtitle processing, format support, and baseline Avalonia UI elements are proudly credited to the original Subtitle Edit team.
-
----
-
-## ✨ Features Exclusive to SonizSRV3
-
-Unlike standard subtitle editors, SonizSRV3 is tailored for visual editors and typesetters:
-- **Aegisub-Style Typesetting UI:** A completely refactored main editor area featuring quick-access 4-layer color pickers (`\1c` to `\4c`), style managers, and formatting toggles.
-- **Total Temporal Freedom:** Internal timeline limits have been removed, allowing infinite overlapping and precise concurrent text animations without auto-shifting.
-- **Visual Positioning:** Click directly on the video player overlay to generate `\pos` tags accurately based on native video resolution.
-- **Karaoke Engine Integration:** Advanced native parsing for `\k`, `\kf`, and `\ko` tags with centisecond-to-millisecond conversion.
-- **YTT / SRV3 Bridge:** Seamless backend integration that automatically triggers `ytsubconverter.exe` upon saving your `.ass` file to generate YouTube-ready stylized subtitles instantly.
-- **Optimized Formats:** Stripped of legacy bloatware, restricting formats strictly to what high-end editors need (ASS, SRT, TXT, and Adobe After Effects).
+> **⚠️ Agradecimientos y Créditos:**
+> SonizSRV3 es una modificación personalizada construida sobre la increíble base de [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit), creado y mantenido por Nikolaj Olsson (niksedk) y colaboradores. Todo el procesamiento central de subtítulos, soporte de formatos y elementos base de la interfaz Avalonia UI son acreditados con orgullo al equipo original de Subtitle Edit.
 
 ---
 
-## 🌐 Documentation & FAQ
-For general usage regarding the core software, refer to the original documentation:
+## ✨ Características Exclusivas de SonizSRV3
+
+A diferencia de los editores de subtítulos estándar, SonizSRV3 está diseñado a la medida para editores visuales y typesetters:
+- **Interfaz de Typesetting Reimaginada:** Un área de edición principal completamente refactorizada que cuenta con selectores de color de 4 capas de acceso rápido (`\1c` a `\4c`), gestores de estilos y botones de formato.
+- **Libertad Temporal Total:** Se han eliminado los límites internos de la línea de tiempo, permitiendo una superposición infinita y animaciones de texto simultáneas precisas sin desplazamientos automáticos.
+- **Posicionamiento Visual:** Haz clic directamente sobre el reproductor de video para generar etiquetas `\pos` con precisión basándose en la resolución nativa del video.
+- **Integración del Motor de Karaoke:** Análisis nativo avanzado para etiquetas `\k`, `\kf` y `\ko` con conversión de centisegundos a milisegundos.
+- **Puente YTT / SRV3:** Integración perfecta en el backend que ejecuta automáticamente `ytsubconverter.exe` al guardar tu archivo `.ass` para generar subtítulos estilizados listos para YouTube al instante.
+- **Formatos Optimizados:** Despojado de software heredado innecesario, restringiendo los formatos estrictamente a lo que necesitan los editores de alto nivel (ASS, SRT, TXT y Adobe After Effects).
+
+---
+
+## 🌐 Documentación y Preguntas Frecuentes
+Para el uso general del software base, consulta la documentación original:
 http://subtitleedit.github.io/subtitleedit/
 
 ---
 
-## 🚀 Automated Builds
-You can find the latest cross-platform builds of the **SonizSRV3 Mod** here:  
-👉 [Releases](https://github.com/SonizBeibe/Soniz.srv3-Subtitle-Edit-MOD-/releases)
+## 🚀 Compilaciones Automatizadas (Builds)
+Puedes encontrar las últimas versiones multiplataforma del **Mod SonizSRV3** aquí:  
+👉 [Lanzamientos (Releases)](https://github.com/SonizBeibe/Soniz.srv3-Subtitle-Edit-MOD-/releases)
 
 ---
 
-# 💻 System Requirements
+## 💻 Requisitos del Sistema
 
-## SonizSRV3 Specific Requirements
+### Requisitos Específicos de SonizSRV3
+- **Puente ytsubconverter:** Para utilizar la generación automática de YTT, `ytsubconverter.exe` debe colocarse en el mismo directorio que el ejecutable de SonizSRV3.
 
 ### Windows
-- Minimum: Windows 10 version 22H2 (build 19045) or newer, fully updated. Older Windows 10 builds (2004/20H2/21H1/21H2) are end-of-life and may fail to start with a .NET runtime error (`0x80131506`).
+- Mínimo: Windows 10 versión 22H2 (compilación 19045) o más reciente, completamente actualizado. Las compilaciones anteriores de Windows 10 (2004/20H2/21H1/21H2) han llegado al final de su vida útil y pueden fallar al iniciar con un error de ejecución de .NET (`0x80131506`).
 
 ### macOS
 
-- **Minimum macOS version**: 12 (Monterey) or newer
-- The `.dmg` is self-contained: `libmpv` and `ffmpeg` are bundled inside `Subtitle Edit.app`, so no MacPorts or Homebrew install is required.
+- **Versión mínima de macOS**: 12 (Monterey) o más reciente
+- El archivo `.dmg` es independiente: `libmpv` y `ffmpeg` vienen incluidos dentro de `Subtitle Edit.app`, por lo que no se requiere instalar MacPorts o Homebrew.
 
-#### Installing on macOS (Unsigned App)
+#### Instalación en macOS (Aplicación no firmada)
 
-Because this custom fork is not signed with an Apple developer certificate, macOS will block it by default. You can still install and run it by following these steps:
+Debido a que este fork personalizado no está firmado con un certificado de desarrollador de Apple, macOS lo bloqueará por defecto. Aún puedes instalarlo y ejecutarlo siguiendo estos pasos:
 
-1. **Download** and **double-click** the `.dmg` file to mount it.
-2. In the window that appears, **drag `Subtitle Edit.app` into your `Applications` folder**.
-3. Open the **Terminal** app (you can find it via Spotlight or in `/Applications/Utilities/`).
-4. In Terminal, run the following commands to remove macOS’s security quarantine flag and add adhoc code signature:
+1. **Descarga** y haz **doble clic** en el archivo `.dmg` para montarlo.
+2. En la ventana que aparece, **arrastra `Subtitle Edit.app` a tu carpeta de Aplicaciones**.
+3. Abre la aplicación **Terminal** (puedes encontrarla a través de Spotlight o en `/Applications/Utilities/`).
+4. En la Terminal, ejecuta los siguientes comandos para eliminar la marca de cuarentena de seguridad de macOS y agregar una firma de código adhoc:
    ```bash
    sudo xattr -rd com.apple.quarantine "/Applications/Subtitle Edit.app"
