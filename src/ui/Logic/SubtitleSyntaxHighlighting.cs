@@ -9,6 +9,8 @@ namespace Nikse.SubtitleEdit.Logic;
 public partial class SubtitleSyntaxHighlighting : DocumentColorizingTransformer
 {
     // Pastel color scheme for HTML and ASS/SSA syntax highlighting
+    public bool IsKaraokeMode { get; set; }
+    private static readonly Color KaraokeColor = Color.FromRgb(255, 105, 180);
     private static readonly Color ElementColor = Color.FromRgb(183, 89, 155);    // Soft purple - HTML element tags (e.g., <div>, <span>) / ASS tag names
     private static readonly Color AttributeColor = Color.FromRgb(86, 156, 214);  // Soft blue - HTML attribute names (e.g., class, id, style)
     private static readonly Color CommentColor = Color.FromRgb(106, 153, 85);    // Soft green - HTML comments (<!-- -->)

@@ -195,7 +195,8 @@ public partial class MainViewModel :
     private List<SubtitleLineViewModel>? _selectedSubtitles;
     [ObservableProperty] private int? _selectedSubtitleIndex;
 
-    [ObservableProperty] private string _editText;
+        [ObservableProperty] private bool _isKaraokeModeEnabled;
+[ObservableProperty] private string _editText;
     [ObservableProperty] private string _editTextCharactersPerSecond;
     [ObservableProperty] private IBrush _editTextCharactersPerSecondBackground;
     [ObservableProperty] private string _editTextTotalLength;
