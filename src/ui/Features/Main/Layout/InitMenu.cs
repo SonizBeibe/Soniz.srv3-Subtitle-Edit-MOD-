@@ -285,6 +285,11 @@ public static class InitMenu
                             Header = Se.Language.File.Export.PlainTextDotDotDot,
                             Command = vm.ShowExportPlainTextCommand,
                         },
+                        new MenuItem
+                        {
+                            Header = "YouTube (.ytt)...",
+                            Command = vm.ExportToYttCommand,
+                        },
                     }
                 },
                 new Separator(),

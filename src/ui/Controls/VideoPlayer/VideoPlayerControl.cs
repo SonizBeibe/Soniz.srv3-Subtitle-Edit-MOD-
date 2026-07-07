@@ -188,6 +188,7 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
         private DispatcherTimer? _autoHideTimer;
         private DateTime _lastActivityTime;
         private ContentPresenter? _contentPresenter;
+        private Canvas? _visualPosOverlay;
 
         private void NotifyPositionChanged(double newPosition)
         {
@@ -359,11 +360,25 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
 
             // Visual Typesetting Tools
             var separator = new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) };
-            stackPanel.Children.Add(separator);
-
-            _btnVisualPos = new ToggleButton { Content = "\\pos", Margin = new Thickness(0, 0, 3, 0) };
-
+            stackPanel.Children.Add(separator);            _btnVisualPos = new ToggleButton { Content = "\pos", Margin = new Thickness(0, 0, 3, 0) };
             ToolTip.SetTip(_btnVisualPos, "Visual Position Tool");
+            _btnVisualPos.Checked += (s, e) =>
+            {
+                if (_visualPosOverlay != null)
+                {
+                    _visualPosOverlay.IsHitTestVisible = true;
+                    _visualPosOverlay.Cursor = new Cursor(StandardCursorType.Cross);
+                }
+            };
+            _btnVisualPos.Unchecked += (s, e) =>
+            {
+                if (_visualPosOverlay != null)
+                {
+                    _visualPosOverlay.IsHitTestVisible = false;
+                    _visualPosOverlay.Cursor = Cursor.Default;
+                    _visualPosOverlay.Children.Clear();
+                }
+            };
             stackPanel.Children.Add(_btnVisualPos);
 
 
@@ -599,12 +614,10 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
             e.Pointer.Capture(this);
 
             // This is a click on the video surface
-            SurfacePointerPressed?.Invoke(this, e);
-
-            if (_btnVisualPos?.IsChecked == true)
+            SurfacePointerPressed?.Invoke(this, e);            if (_btnVisualPos?.IsChecked == true && _visualPosOverlay != null)
             {
-                var pt = e.GetPosition(_contentPresenter);
-                var bounds = _contentPresenter.Bounds;
+                var pt = e.GetPosition(_visualPosOverlay);
+                var bounds = _visualPosOverlay.Bounds;
                 if (bounds.Width > 0 && bounds.Height > 0)
                 {
                     // Convert click to video resolution percentage
@@ -612,7 +625,6 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
                     double pctY = pt.Y / bounds.Height;
 
                     VisualPosClicked?.Invoke(this, (pctX, pctY));
-                    _btnVisualPos.IsChecked = false;
                 }
                 e.Handled = true;
                 return;
@@ -632,8 +644,39 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
             }
         }
 
-        private void OnMainGridPointerReleased(object? sender, PointerReleasedEventArgs e)
+                private void OnMainGridPointerMoved(object? sender, PointerEventArgs e)
         {
+            if (_btnVisualPos?.IsChecked == true && _visualPosOverlay != null)
+            {
+                var pt = e.GetPosition(_visualPosOverlay);
+                _visualPosOverlay.Children.Clear();
+
+                var line1 = new Avalonia.Controls.Shapes.Line
+                {
+                    StartPoint = new Point(pt.X, 0),
+                    EndPoint = new Point(pt.X, _visualPosOverlay.Bounds.Height),
+                    Stroke = Brushes.White,
+                    StrokeThickness = 1
+                };
+                var line2 = new Avalonia.Controls.Shapes.Line
+                {
+                    StartPoint = new Point(0, pt.Y),
+                    EndPoint = new Point(_visualPosOverlay.Bounds.Width, pt.Y),
+                    Stroke = Brushes.White,
+                    StrokeThickness = 1
+                };
+
+                _visualPosOverlay.Children.Add(line1);
+                _visualPosOverlay.Children.Add(line2);
+            }
+        }        private void OnMainGridPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            if (_btnVisualPos?.IsChecked == true)
+            {
+                _btnVisualPos.IsChecked = false;
+                e.Handled = true;
+            }
+
             if (!_surfaceLeftButtonDown)
             {
                 return;

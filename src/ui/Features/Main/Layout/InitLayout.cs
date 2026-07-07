@@ -203,82 +203,71 @@ public static partial class InitLayout
         {
             RowDefinitions =
             {
-                new RowDefinition(GridLength.Star),
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(GridLength.Star)
+                new RowDefinition(GridLength.Auto), // Top section for Video and Audio Waveform
+                new RowDefinition(GridLength.Auto), // Splitter
+                new RowDefinition(GridLength.Star)  // Bottom section for Text Edit & Data Grid
             }
         };
 
-        // Top content (will hold the nested grid)
-        var topContent = new Border();
-        Grid.SetRow(topContent, 0);
-        contentGrid.Children.Add(topContent);
-
-        // Create a nested grid with columns (for vertical split)
-        var nestedGrid = new Grid
+        // Top Content: Video Player and Audio Waveform
+        var topGrid = new Grid
         {
             ColumnDefinitions =
             {
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Star)
+                new ColumnDefinition(GridLength.Star), // Video
+                new ColumnDefinition(GridLength.Auto), // Splitter
+                new ColumnDefinition(GridLength.Star)  // Audio Waveform
             }
         };
 
-        // Left part of nested grid
-        var nestedLeft = new Border
+        var videoContainer = new Border
         {
-            Child = InitListViewAndEditBox.MakeLayoutListViewAndEditBox(mainPage, vm)
+            Child = InitVideoPlayer.MakeLayoutVideoPlayer(vm)
         };
-        Grid.SetColumn(nestedLeft, 0);
-        nestedGrid.Children.Add(nestedLeft);
+        Grid.SetColumn(videoContainer, 0);
+        topGrid.Children.Add(videoContainer);
 
-        // Vertical GridSplitter
-        var nestedSplitter = new GridSplitter
+        var topSplitter = new GridSplitter
         {
             Width = UiUtil.SplitterWidthOrHeight,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Stretch
         };
-        Grid.SetColumn(nestedSplitter, 1);
-        nestedGrid.Children.Add(nestedSplitter);
+        Grid.SetColumn(topSplitter, 1);
+        topGrid.Children.Add(topSplitter);
 
-        // Right part of nested grid
-        var nestedRight = new Border
+        var audioContainer = new Border
         {
-            Child = InitVideoPlayer.MakeLayoutVideoPlayer(vm),
+            Child = InitWaveform.MakeWaveform(vm),
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Height = double.NaN
         };
-        Grid.SetColumn(nestedRight, 2);
-        nestedGrid.Children.Add(nestedRight);
+        Grid.SetColumn(audioContainer, 2);
+        topGrid.Children.Add(audioContainer);
 
-        // Add nested grid to top content
-        topContent.Child = nestedGrid;
+        Grid.SetRow(topGrid, 0);
+        contentGrid.Children.Add(topGrid);
 
-        // Main GridSplitter (horizontal)
-        var splitter = new GridSplitter
+        // Vertical Splitter (between Top and Bottom)
+        var mainSplitter = new GridSplitter
         {
             Height = UiUtil.SplitterWidthOrHeight,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Center
         };
-        Grid.SetRow(splitter, 1);
-        contentGrid.Children.Add(splitter);
+        Grid.SetRow(mainSplitter, 1);
+        contentGrid.Children.Add(mainSplitter);
 
-        // Bottom content
-        var bottomContent = new Border
+        // Bottom Content: Subtitle Data Grid (spanning full width) + Text Editor on top
+        var bottomContainer = new Border
         {
-            Child = InitWaveform.MakeWaveform(vm),
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Height = double.NaN,
+            Child = InitListViewAndEditBox.MakeLayoutListViewAndEditBox(mainPage, vm)
         };
-        Grid.SetRow(bottomContent, 2);
-        contentGrid.Children.Add(bottomContent);
+        Grid.SetRow(bottomContainer, 2);
+        contentGrid.Children.Add(bottomContainer);
 
         CleanupOldContent(vm.ContentGrid);
         vm.ContentGrid.Children.Add(contentGrid);
-
-        // set waveform height
-        contentGrid.RowDefinitions[2].Height = new GridLength(WaveFormHeight, GridUnitType.Pixel);
 
         return 1;
     }

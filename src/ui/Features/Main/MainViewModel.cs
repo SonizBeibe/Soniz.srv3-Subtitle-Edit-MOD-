@@ -2821,6 +2821,23 @@ public partial class MainViewModel :
     }
 
     [RelayCommand]
+    public async Task ExportToYtt()
+    {
+        if (Window == null) return;
+        if (IsEmpty)
+        {
+            ShowSubtitleNotLoadedMessage();
+            return;
+        }
+
+        var yttFormat = new YouTubeYtt();
+        var fileName = await _fileHelper.PickSaveSubtitleFile(Window, yttFormat, GetNewFileName(), Subtitles.ToList());
+        if (!string.IsNullOrEmpty(fileName))
+        {
+            ShowFileSavedNotification(fileName);
+        }
+    }
+
     private async Task ExportPac()
     {
         if (Window == null)
@@ -10026,6 +10043,13 @@ public partial class MainViewModel :
         // BGR hex
         var hex = $"&H{c.B:X2}{c.G:X2}{c.R:X2}&";
         var tag = $"{{\\{assCode}{hex}}}";
+
+        if (c.A < 255)
+        {
+            var alpha = 255 - c.A;
+            var alphaTag = $"{{\\alpha&H{alpha:X2}&}}";
+            tag = alphaTag + tag;
+        }
 
         var selectionStart = Math.Min(tb.SelectionStart, tb.SelectionEnd);
         tb.Text = tb.Text.Insert(selectionStart, tag);
@@ -20233,6 +20257,10 @@ public partial class MainViewModel :
         }
 
         _selectedSubtitles = selectedItems.Cast<SubtitleLineViewModel>().ToList();
+        if (_selectedSubtitles.Count > 0)
+        {
+            SeekVideoToSubtitleStart(_selectedSubtitles.First());
+        }
         if (selectedItems.Count > 1)
         {
             StatusTextRight = string.Format(Se.Language.Main.XLinesSelectedOfY, selectedItems.Count, Subtitles.Count);
