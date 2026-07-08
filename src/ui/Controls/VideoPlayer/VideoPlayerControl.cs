@@ -360,23 +360,31 @@ namespace Nikse.SubtitleEdit.Controls.VideoPlayer
 
             // Visual Typesetting Tools
             var separator = new Border { Width = 1, Background = Brushes.Gray, Margin = new Thickness(5, 2) };
-            stackPanel.Children.Add(separator);            _btnVisualPos = new ToggleButton { Content = "\pos", Margin = new Thickness(0, 0, 3, 0) };
+            stackPanel.Children.Add(separator);            _btnVisualPos = new ToggleButton { Content = "\\pos", Margin = new Thickness(0, 0, 3, 0) };
             ToolTip.SetTip(_btnVisualPos, "Visual Position Tool");
-            _btnVisualPos.Checked += (s, e) =>
+            _btnVisualPos.IsCheckedChanged += (s, e) =>
             {
-                if (_visualPosOverlay != null)
+                if (_btnVisualPos.IsChecked == true)
                 {
+                    if (_visualPosOverlay == null)
+                    {
+                        _visualPosOverlay = new Canvas { IsHitTestVisible = false };
+                        if (this.Content is Grid layoutRoot)
+                        {
+                            layoutRoot.Children.Add(_visualPosOverlay);
+                        }
+                    }
                     _visualPosOverlay.IsHitTestVisible = true;
                     _visualPosOverlay.Cursor = new Cursor(StandardCursorType.Cross);
                 }
-            };
-            _btnVisualPos.Unchecked += (s, e) =>
-            {
-                if (_visualPosOverlay != null)
+                else
                 {
-                    _visualPosOverlay.IsHitTestVisible = false;
-                    _visualPosOverlay.Cursor = Cursor.Default;
-                    _visualPosOverlay.Children.Clear();
+                    if (_visualPosOverlay != null)
+                    {
+                        _visualPosOverlay.IsHitTestVisible = false;
+                        _visualPosOverlay.Cursor = Cursor.Default;
+                        _visualPosOverlay.Children.Clear();
+                    }
                 }
             };
             stackPanel.Children.Add(_btnVisualPos);

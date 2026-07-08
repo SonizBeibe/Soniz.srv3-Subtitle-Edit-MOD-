@@ -2831,13 +2831,14 @@ public partial class MainViewModel :
         }
 
         var yttFormat = new YouTubeYtt();
-        var fileName = await _fileHelper.PickSaveSubtitleFile(Window, yttFormat, GetNewFileName(), Subtitles.ToList());
+        var fileName = await _fileHelper.PickSaveSubtitleFile(Window, yttFormat, GetNewFileName(), string.Format(Se.Language.Main.SaveXFileAs, yttFormat.Name));
         if (!string.IsNullOrEmpty(fileName))
         {
-            ShowFileSavedNotification(fileName);
+            ShowStatus(string.Format(Se.Language.Main.FileExportedInFormatXToY, "YTT", fileName));
         }
     }
 
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
     private async Task ExportPac()
     {
         if (Window == null)
