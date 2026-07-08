@@ -78,7 +78,7 @@ public static partial class InitListViewAndEditBox
 
         var mainGrid = new Grid
         {
-            RowDefinitions = new RowDefinitions("*,Auto"),
+            RowDefinitions = new RowDefinitions("Auto,*"),
         };
 
         vm.SubtitleGrid = new DataGrid
@@ -546,7 +546,7 @@ public static partial class InitListViewAndEditBox
             Source = vm,
         };
 
-        Grid.SetRow(dropHost, 0);
+        Grid.SetRow(dropHost, 1);
         mainGrid.Children.Add(dropHost);
 
         // Create a Flyout for the DataGrid
@@ -1415,7 +1415,7 @@ public static partial class InitListViewAndEditBox
         Grid.SetRow(textEditGrid, 3);
         editGrid.Children.Add(textEditGrid);
 
-        Grid.SetRow(editGrid, 1);
+        Grid.SetRow(editGrid, 0);
         mainGrid.Children.Add(editGrid);
 
 
