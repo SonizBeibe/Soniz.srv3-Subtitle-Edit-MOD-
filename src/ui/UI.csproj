@@ -284,4 +284,7 @@
 			<_Parameter1>UITests</_Parameter1>
 		</AssemblyAttribute>
 	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NLua" Version="1.7.9" />
+  </ItemGroup>
 </Project>
